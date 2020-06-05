@@ -1,0 +1,8 @@
+Rplots.pdf
+auto
+*.log
+figure-label-errors-data
+*~
+library
+*.aux
+tikzMetrics*

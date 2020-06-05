@@ -1,0 +1,31 @@
+\documentclass[12pt]{article}
+
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{tikz}
+
+\begin{document}
+
+\begin{figure}
+  \input{figure-signal-cost}
+  \caption{Signal/cost}
+  \label{fig:signal-cost}
+\end{figure}
+
+\begin{figure}
+  \input{figure-timings}
+  \input{figure-timings-labels}
+  \caption{timings}
+  \label{fig:timings}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.6\textwidth]{figure-label-errors-SegAnnot}
+  \includegraphics[width=0.35\textwidth]{figure-label-errors}
+  \caption{\textbf{Left:} accuracy comparison with
+    SegAnnot. \textbf{Right:} accuracy comparison with OPART.}
+  \label{fig:label-errors}
+\end{figure}
+
+\end{document}

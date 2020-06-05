@@ -1,0 +1,5 @@
+Figures for LOPART paper
+
+- Figure 1: example data and cost computation.
+- Figure 2: timings.
+- [[file:figure-label-errors.R][Figure 3: label error]].
