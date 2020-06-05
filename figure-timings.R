@@ -23,7 +23,7 @@ gg <- ggplot()+
     10, seconds, label=label),
     size=3,
     data=ref.dt,
-    vjust=1.5,
+    vjust=1.2,
     color="grey50")+
   geom_ribbon(aes(
     size, ymin=min, ymax=max, fill=Algorithm),
@@ -41,7 +41,7 @@ gg <- ggplot()+
   scale_y_log10()+
   theme_bw()
 dl <- directlabels::direct.label(gg, list(cex=0.7, "last.polygons"))
-tikz("figure-timings-labels.tex", width=2.5, height=3)
+tikz("figure-timings-labels.tex", width=2.5, height=2)
 print(dl)
 dev.off()
 
@@ -91,7 +91,7 @@ with $O(N)$ positive labels")+
     limits=10^c(0.5, 5.5),
     breaks=10^seq(1, 5, by=2))+
   scale_y_log10()
-tikz("figure-timings.tex", width=3.3, height=3)
+tikz("figure-timings.tex", width=3.3, height=2)
 print(gg)
 dev.off()
 
