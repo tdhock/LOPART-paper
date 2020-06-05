@@ -1,5 +1,7 @@
-Figures for LOPART paper
+Figures for Labeled Optimal PARTitioning paper
 
-- Figure 1: example data and cost computation.
-- Figure 2: timings.
+- [[file:figure-signal-cost.R][Figure 1: example data and cost computation]].
+- [[file:figure-timings.R][Figure 2: timings]].
 - [[file:figure-label-errors.R][Figure 3: label error]].
+
+Reproducibility: type "make" in the shell.
