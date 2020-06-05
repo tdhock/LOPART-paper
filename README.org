@@ -1,7 +1,9 @@
 Figures for Labeled Optimal PARTitioning paper
 
-- [[file:figure-signal-cost.R][Figure 1: example data and cost computation]].
-- [[file:figure-timings.R][Figure 2: timings]].
-- [[file:figure-label-errors.R][Figure 3: label error]].
+- Figure 1: example data and cost computation. [[file:figure-signal-cost.R][R script]], [[file:figure-signal-cost-standAlone.pdf][standAlone
+  pdf]], [[file:figure-signal-cost.tex][tex for inclusion in paper]].
+- Figure 2: timings. [[file:figure-timings.R][R script]], tex for inclusion in paper: [[file:figure-timings.tex][time vs
+  number of data]], [[file:figure-timings-labels.tex][time vs number of labels]].
+- Figure 3: label error. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf]], [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf]].
 
 Reproducibility: type "make" in the shell.
