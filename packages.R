@@ -55,6 +55,7 @@ works_with_R <- function(Rvers,...){
 
 options(repos=c(
   "http://cloud.r-project.org"))
+library(LOPART)
 works_with_R(
   "4.0.0",
   data.table="1.12.8",
@@ -64,8 +65,9 @@ works_with_R(
   microbenchmark="1.4.7",
   fpop="2019.8.26",
   bit64="0.9.7",
-  directlabels="2020.1.31",
-  "tdhock/LOPART@56b47a33a1eace0a92ab748f60d412a2dc203bfb")
+  ##"tdhock/LOPART@6758a716f3ddf3c061e4a9f91affa62c53771e86",
+  ##directlabels="2020.1.31"
+  "tdhock/directlabels@fa80e83929f6dc79051c5a5d1ca2c9f150e7e9de")
 options(
   tikzDocumentDeclaration="\\documentclass[12pt]{article}",
   tikzMetricsDictionary="tikzMetricsArxiv")

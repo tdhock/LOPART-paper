@@ -6,3 +6,8 @@ figure-label-errors-data
 library
 *.aux
 tikzMetrics*
+*.nav
+*.out
+*.snm
+*.toc
+figure-candidates

@@ -7,3 +7,15 @@ Figures for Labeled Optimal PARTitioning paper
 - Figure 3: label error. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf]], [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf]].
 
 Reproducibility: type "make" in the shell.
+
+** Presentation slides
+
+[[file:slides.tex]]
+
+- [[file:figure-candidates.R]] demo slides.
+
+** TODOs
+
+- interactive version of [[file:figure-candidates.R]] click top panel to
+  select t, click bottom panel to select tau. with cost heatmap?
+  
