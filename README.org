@@ -10,7 +10,7 @@ Reproducibility: type "make" in the shell.
 
 ** Presentation slides
 
-[[file:slides.tex]]
+[[file:slides.tex]] makes [[file:slides.pdf]]
 
 - [[file:figure-candidates.R]] demo slides.
 - [[file:figure-candidates-interactive.R]] creates a more interactive
@@ -18,8 +18,5 @@ Reproducibility: type "make" in the shell.
   and other penalty values:
   [[http://members.cbio.mines-paristech.fr/~thocking/figure-candidates-interactive/]]
 
-** TODOs
 
-- interactive version of [[file:figure-candidates.R]] click top panel to
-  select t, click bottom panel to select tau. with cost heatmap?
   
