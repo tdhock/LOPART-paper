@@ -13,6 +13,10 @@ Reproducibility: type "make" in the shell.
 [[file:slides.tex]]
 
 - [[file:figure-candidates.R]] demo slides.
+- [[file:figure-candidates-interactive.R]] creates a more interactive
+  version of the demo slide figures, where you can select any t,tau
+  and other penalty values:
+  [[http://members.cbio.mines-paristech.fr/~thocking/figure-candidates-interactive/]]
 
 ** TODOs
 

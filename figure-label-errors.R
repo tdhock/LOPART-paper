@@ -74,8 +74,31 @@ total.min.wide[, .(
   prob.folds=.N
 ), keyby=.(diff)]
 total.min.wide[diff<0]
+total.min.wide[, train.test.diff := train.test_OPART - train.test_LOPART]
+mytab <- function(dt, col.name){
+  errors <- dt[, .(
+    count=.N,
+    percent=100*.N/nrow(dt)
+  ), by=col.name]
+  is.zero <- errors[[col.name]] == 0
+  nonzero <- errors[!is.zero]
+  sum.wide <- data.table(
+    sum.count=sum(errors$count),
+    zero.count=errors$count[is.zero],
+    nonzero.count=sum(nonzero$count),
+    nonzero.min=min(nonzero[[col.name]]),
+    nonzero.max=max(nonzero[[col.name]]))
+  sum.tall <- melt(sum.wide, measure.vars=names(sum.wide))
+  sum.tall[grepl("count", variable), percent := 100*value/nrow(dt) ]
+  list(
+    errors=errors,
+    summary=sum.tall)
+}
+mytab(total.min.wide, "train_OPART")
 
 total.min.wide[, test.diff := test_OPART-test_LOPART]
+mytab(total.min.wide, "test.diff")
+
 train.test.counts <- total.min.wide[, .(
   splits=.N
 ), by=.(train_OPART, test.diff)]

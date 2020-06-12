@@ -1,3 +1,6 @@
+figure-candidates-interactive
+*.rds
+.Rhistory
 Rplots.pdf
 auto
 *.log
@@ -11,3 +14,4 @@ tikzMetrics*
 *.snm
 *.toc
 figure-candidates
+figure-candidates.tex
