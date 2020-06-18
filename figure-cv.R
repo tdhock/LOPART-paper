@@ -57,15 +57,16 @@ SegAnnot.sign.counts <- SegAnnot.wide.counts[, .(
 ), keyby=.(test.fold, sign=sign(diff))]
 SegAnnot.sign.counts[, total := sum(sum.count), by=test.fold]
 SegAnnot.sign.counts[, percent := 100*sum.count/total]
-
+my.title <- ggtitle("Learned constant penalty")
 gg <- ggplot()+
+  my.title+
   geom_tile(aes(
     diff, factor(test.fold),
     fill=log10(count)),
     data=SegAnnot.wide.counts)+
   coord_equal()+
   scale_fill_gradient(
-    "log10(sequences)",
+    "log10(seqs)",
     low="white",
     high="orange")+
   theme_bw()+ 
@@ -97,13 +98,14 @@ prob.err.sign.counts[, total := sum(sum.count), by=test.fold]
 prob.err.sign.counts[, percent := 100*sum.count/total]
 
 gg <- ggplot()+
+  my.title+
   geom_tile(aes(
     diff, factor(test.fold),
     fill=log10(count)),
     data=prob.err.wide.counts)+
   coord_equal()+
   scale_fill_gradient(
-    "log10(sequences)",
+    "log10(seqs)",
     low="white",
     high="orange")+
   theme_bw()+ 

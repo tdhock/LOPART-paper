@@ -30,8 +30,10 @@ SegAnnot.compare.counts <- SegAnnot.compare[, .(
 SegAnnot.compare.counts[, .(
   test.sets=sum(test.sets)
 ), by=.(same = fp==fewer.FN)]
+my.title <- ggtitle("Best penalty")
 gg <- ggplot()+
   ##ggtitle("LOPART is more accurate than SegAnnot")+
+  my.title+
   geom_abline(aes(
     slope=slope, intercept=intercept, color=test.errors),
     data=data.table(slope=1, intercept=0, test.errors="equal"))+
@@ -43,7 +45,9 @@ gg <- ggplot()+
   geom_text(aes(
     fewer.FN, fp, label=test.sets),
     data=SegAnnot.compare.counts)+
-  scale_fill_gradient(low="white", high="red")+
+  scale_fill_gradient(
+    "log10(seqs)",
+    low="white", high="red")+
   coord_equal()+
   theme_bw()+
   scale_x_continuous(
@@ -104,6 +108,7 @@ train.test.counts <- total.min.wide[, .(
 ), by=.(train_OPART, test.diff)]
 gg <- ggplot()+
   ##ggtitle("LOPART is more accurate\nthan OPART")+
+  my.title+
   geom_hline(yintercept=0, color="grey")+
   geom_vline(xintercept=0, color="grey")+
   geom_tile(aes(
@@ -113,7 +118,9 @@ gg <- ggplot()+
   geom_text(aes(
     train_OPART, test.diff, label=splits),
     data=train.test.counts)+
-  scale_fill_gradient(low="white", high="red")+
+  scale_fill_gradient(
+    "log10(seqs)",
+    low="white", high="red")+
   coord_equal()+
   theme_bw()+
   scale_x_continuous(
