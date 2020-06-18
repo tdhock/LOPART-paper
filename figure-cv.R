@@ -75,8 +75,7 @@ gg <- ggplot()+
     label=count),
     data=SegAnnot.wide.counts)+
   ylab("Test fold")+
-  xlab("Difference of incorrectly predicted labels
-in test set (SegAnnot-LOPART)")
+  xlab("Test error difference (SegAnnot-LOPART)")
 print(gg)
 pdf("figure-cv-SegAnnot.pdf", width=5, height=2)
 print(gg)
@@ -114,8 +113,7 @@ gg <- ggplot()+
     label=count),
     data=prob.err.wide.counts)+
   ylab("Test fold")+
-  xlab("Difference of incorrectly predicted
-labels in test set (OPART-LOPART)")
+  xlab("Test error difference (OPART-LOPART)")
 pdf("figure-cv.pdf", width=4, height=2)
 print(gg)
 dev.off()

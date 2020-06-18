@@ -31,6 +31,10 @@ SegAnnot.compare.counts[, .(
   test.sets=sum(test.sets)
 ), by=.(same = fp==fewer.FN)]
 my.title <- ggtitle("Best penalty")
+scale.fill <- scale_fill_gradient(
+  "log10(seqs)",
+  low="white",
+  high="violet")
 gg <- ggplot()+
   ##ggtitle("LOPART is more accurate than SegAnnot")+
   my.title+
@@ -45,9 +49,7 @@ gg <- ggplot()+
   geom_text(aes(
     fewer.FN, fp, label=test.sets),
     data=SegAnnot.compare.counts)+
-  scale_fill_gradient(
-    "log10(seqs)",
-    low="white", high="red")+
+  scale.fill+
   coord_equal()+
   theme_bw()+
   scale_x_continuous(
@@ -118,9 +120,7 @@ gg <- ggplot()+
   geom_text(aes(
     train_OPART, test.diff, label=splits),
     data=train.test.counts)+
-  scale_fill_gradient(
-    "log10(seqs)",
-    low="white", high="red")+
+  scale.fill+
   coord_equal()+
   theme_bw()+
   scale_x_continuous(
