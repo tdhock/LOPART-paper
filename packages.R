@@ -62,6 +62,7 @@ works_with_R(
   penaltyLearning="2020.5.13",
   tikzDevice="0.12.3",
   ggplot2="3.3.1",
+  ggrepel="0.8.2",
   microbenchmark="1.4.7",
   fpop="2019.8.26",
   bit64="0.9.7",

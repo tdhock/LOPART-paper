@@ -4,10 +4,12 @@ Figures for Labeled Optimal PARTitioning paper
   pdf]], [[file:figure-signal-cost.tex][tex for inclusion in paper]].
 - Figure 2: timings. [[file:figure-timings.R][R script]], tex for inclusion in paper: [[file:figure-timings.tex][time vs
   number of data]], [[file:figure-timings-labels.tex][time vs number of labels]].
-- Figure 3: best case label error. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf]], [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf]].
-- Figure 4: cross-validation label error. [[file:figure-cv.R][R script]], [[file:figure-cv.pdf][OPART pdf]], [[file:figure-cv-SegAnnot.pdf][SegAnnot pdf]].
+- Best case label error figures. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf (Fig 3 left)]], [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf (Fig 4 left)]].
+- Cross-validation label error figures. [[file:figure-cv.R][R script]], [[file:figure-cv.pdf][OPART pdf (Fig 3
+  right)]], [[file:figure-cv-SegAnnot.pdf][SegAnnot pdf (Fig 4 right)]], [[file:figure-cv-roc.pdf][Fig 5 ROC curves]].
 
-Reproducibility: type "make" in the shell.
+Reproducibility: use "make" with one of the recipes defined in
+[[file:Makefile]].
 
 ** Presentation slides
 

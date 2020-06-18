@@ -10,3 +10,5 @@ figure-timings.tex: figure-timings.R
 	R --vanilla < $<
 figure-label-errors.pdf: figure-label-errors.R
 	R --vanilla < $<
+figure-cv.pdf: figure-cv.R
+	R --vanilla < $<
