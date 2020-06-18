@@ -31,7 +31,7 @@ SegAnnot.compare.counts[, .(
   test.sets=sum(test.sets)
 ), by=.(same = fp==fewer.FN)]
 gg <- ggplot()+
-  ggtitle("LOPART is more accurate than SegAnnot")+
+  ##ggtitle("LOPART is more accurate than SegAnnot")+
   geom_abline(aes(
     slope=slope, intercept=intercept, color=test.errors),
     data=data.table(slope=1, intercept=0, test.errors="equal"))+
@@ -103,8 +103,7 @@ train.test.counts <- total.min.wide[, .(
   splits=.N
 ), by=.(train_OPART, test.diff)]
 gg <- ggplot()+
-  ggtitle("LOPART is more accurate
-than OPART")+
+  ##ggtitle("LOPART is more accurate\nthan OPART")+
   geom_hline(yintercept=0, color="grey")+
   geom_vline(xintercept=0, color="grey")+
   geom_tile(aes(
@@ -114,7 +113,7 @@ than OPART")+
   geom_text(aes(
     train_OPART, test.diff, label=splits),
     data=train.test.counts)+
-  scale_fill_gradient(low="white", high="violet")+
+  scale_fill_gradient(low="white", high="red")+
   coord_equal()+
   theme_bw()+
   scale_x_continuous(
