@@ -65,6 +65,12 @@ pred.text.dt <- rbind(
     data.table(model.name="OPART", FPR=0.6, TPR=0.43))),
   data.table(test.fold=1:2, model.name="SegAnnot", FPR=0.45, TPR=0.1))
 segs.dt <- pred.point.dt[pred.text.dt, on=.(test.fold, model.name)]
+auc.wide <- dcast(
+  auc.dt,
+  test.fold ~ model.name,
+  value.var = "auc")
+auc.wide[, diff := OPART-LOPART]
+auc.wide
 algo.colors <- c(
   OPART="deepskyblue",
   LOPART="black",
