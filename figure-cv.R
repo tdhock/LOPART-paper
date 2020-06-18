@@ -44,6 +44,8 @@ auc.dt <- err.test[, {
 roc.dt <- auc.dt[, data.table(
   roc[[1]]
 ), by=.(test.fold, model.name)]
+possible.dt <- unique(auc.dt[, .(
+  test.fold, possible.fp, possible.fn)])
 pred.point.dt <- rbind(
   data.table(
     FPR=0, TPR=0, fp=0, tp=0, auc=NA,
@@ -52,15 +54,16 @@ pred.point.dt <- rbind(
   auc.dt[, .(
     FPR, TPR, fp, tp, auc,
     model.name, test.fold
-  )])
+  )]
+)[possible.dt, on=.(test.fold)]
 pred.text.dt <- rbind(
   data.table(test.fold=1, rbind(
-    data.table(model.name="LOPART", FPR=0.55, TPR=0.79),
-    data.table(model.name="OPART", FPR=0.4, TPR=0.42))),
+    data.table(model.name="LOPART", FPR=0.7, TPR=0.79),
+    data.table(model.name="OPART", FPR=0.5, TPR=0.42))),
   data.table(test.fold=2, rbind(
-    data.table(model.name="LOPART", FPR=0.5, TPR=0.8),
-    data.table(model.name="OPART", FPR=0.4, TPR=0.43))),
-  data.table(test.fold=1:2, model.name="SegAnnot", FPR=0.25, TPR=0.1))
+    data.table(model.name="LOPART", FPR=0.7, TPR=0.8),
+    data.table(model.name="OPART", FPR=0.6, TPR=0.43))),
+  data.table(test.fold=1:2, model.name="SegAnnot", FPR=0.45, TPR=0.1))
 segs.dt <- pred.point.dt[pred.text.dt, on=.(test.fold, model.name)]
 algo.colors <- c(
   OPART="deepskyblue",
@@ -92,10 +95,10 @@ gg <- ggplot()+
     i.FPR, i.TPR,
     color=model.name,
     label=sprintf(
-      "%s\nFP=%d\nTP=%d%s",
+      "%s\nFPR=%d/%d=%.1f%%\nTPR=%d/%d=%.1f%%%s",
       model.name,
-      fp,
-      tp,
+      fp, possible.fp, 100*fp/possible.fp,
+      tp, possible.fn, 100*tp/possible.fn,
       ifelse(is.na(auc), "", sprintf("\nauc=%.3f", auc)))),
     size=3,
     data=segs.dt)+
