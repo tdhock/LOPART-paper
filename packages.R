@@ -68,7 +68,7 @@ works_with_R(
   bit64="0.9.7",
   ##"tdhock/LOPART@6758a716f3ddf3c061e4a9f91affa62c53771e86",
   ##directlabels="2020.1.31"
-  "tdhock/directlabels@fa80e83929f6dc79051c5a5d1ca2c9f150e7e9de")
+  "tdhock/directlabels@c85b729d612d9f3cc9cc4a7372b22082d44091d0")
 options(
   tikzDocumentDeclaration="\\documentclass[12pt]{article}",
   tikzMetricsDictionary="tikzMetricsArxiv")

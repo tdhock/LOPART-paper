@@ -129,55 +129,6 @@ for(up.to.t in unique(up.to.dt$t)){
     cost.h <- cost.range[2]-cost.range[1]
     blank.dt <- data.table(
       position=1, cost=cost.range[1]-cost.h/4)
-    data.col <- "top"
-    space <- 0.1
-    my.method <- list(
-      vjust=1,
-      gapply.fun(d[which.min(d$y), ]),
-      "calc.boxes",
-      function(d, ...) {
-        for(xy in c("x", "y")) {
-          d[[sprintf("%s.%s", data.col, xy)]] <- d[[xy]]
-        }
-        d$y <- min(d$y)-space
-        d
-      },
-      function(d, ...) {
-        d$w <- d$w + space
-        d
-      },
-      "calc.borders",
-      qp.labels("x", "left", "right", limits=xlimits),
-      "calc.borders",
-      function(d,...){
-        for(side in c("left", "right", "top", "bottom")){
-          for(xy in c("x", "y")){
-            col.name <- paste0(side, ".", xy)
-            if(!col.name %in% names(d)){
-              d[[col.name]] <- NA
-            }
-          }
-        }
-        if(! "box.color" %in% names(d)){
-          d$box.color <- "black"
-        }
-        for(i in 1:nrow(d))with(d[i,], {
-          L <- list(
-            x=c(left.x, left, top.x, right, right.x, right, bottom.x, left),
-            y=c(left.y, top, top.y, top, right.y, bottom, bottom.y, bottom))
-          for(xy.name in names(L)){
-            xy <- L[[xy.name]]
-            L[[xy.name]] <- xy[!is.na(xy)]
-          }
-          grid::grid.polygon(
-            L$x, L$y,
-            default.units="cm",
-            gp=grid::gpar(col=box.color, fill=colour)
-          )
-        })
-        d$colour <- "white"
-        d
-      })
     gg <- ggplot()+
       geom_blank(aes(
         position, cost),
@@ -241,13 +192,21 @@ for(up.to.t in unique(up.to.dt$t)){
         "position $t,\\tau$",
         breaks=seq(0, 100, by=10))+
       geom_dl(aes(
-        change, y,
-        hjust=hjust,
+        change, cost_candidates,
         color=Algorithm,
-        group=Algorithm,
+        label.group=Algorithm,
         label=sprintf("$\\tau^*_{%d} = %d$", up.to.t, tau)),
-        method="my.method",
-        data=COST(min.dl.dt))+
+        method="bottom.polygons",
+        debug=TRUE,
+        data=COST(cost.dt))+
+      ## geom_dl(aes(
+      ##   change, y,
+      ##   hjust=hjust,
+      ##   color=Algorithm,
+      ##   group=Algorithm,
+      ##   label=sprintf("$\\tau^*_{%d} = %d$", up.to.t, tau)),
+      ##   method="bottom.polygons",
+      ##   data=COST(min.dl.dt))+
       geom_point(aes(
         change, cost_candidates,
         color=Algorithm, shape=Algorithm),
@@ -256,7 +215,7 @@ for(up.to.t in unique(up.to.dt$t)){
         change, y,
         color=Algorithm),
         data=COST(min.dt))
-    ##print(gg)
+    print(gg)
     
     this.tex <- sprintf(
       "figure-candidates/t%d-tau%d.tex",
