@@ -5,6 +5,7 @@ Rplots.pdf
 auto
 *.log
 figure-label-errors-data
+figure-sequence-cv-data
 *~
 library
 *.aux

@@ -66,9 +66,10 @@ works_with_R(
   microbenchmark="1.4.7",
   fpop="2019.8.26",
   bit64="0.9.7",
+  R.utils="2.9.2",
   ##"tdhock/LOPART@6758a716f3ddf3c061e4a9f91affa62c53771e86",
   ##directlabels="2020.1.31"
-  "tdhock/directlabels@c85b729d612d9f3cc9cc4a7372b22082d44091d0")
+  "tdhock/directlabels@e3bad3c4786d8e653c7534ce4bde51df34a3223b")
 options(
   tikzDocumentDeclaration="\\documentclass[12pt]{article}",
   tikzMetricsDictionary="tikzMetricsArxiv")
