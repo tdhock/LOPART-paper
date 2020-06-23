@@ -8,6 +8,9 @@ Figures for Labeled Optimal PARTitioning paper
 - Cross-validation label error figures. [[file:figure-cv.R][R script]], [[file:figure-cv.pdf][OPART pdf (Fig 3
   right)]], [[file:figure-cv-SegAnnot.pdf][SegAnnot pdf (Fig 4 right)]], [[file:figure-cv-roc.pdf][Fig 5 ROC curves]].
 - Comparison with BIC figures. [[file:figure-cv-BIC.R][R script]], [[file:figure-cv-BIC-roc.pdf][ROC curves]], [[file:figure-cv-BIC.pdf][Error rates]].
+- Sequential cross-validation (fold 1 = first half of labels, fold 2 =
+  second half labels) figures. [[file:figure-sequence-cv.R][R script]], [[file:figure-sequence-cv-OPART.pdf][Best case OPART differences]],
+  [[file:figure-sequence-cv-SegAnnot.pdf][Best case SegAnnot differences]], [[file:figure-sequence-cv-roc.pdf][ROC curves]], [[file:figure-sequence-cv.pdf][Test error rates]].
 
 Reproducibility: use "make" with one of the recipes defined in
 [[file:Makefile]].

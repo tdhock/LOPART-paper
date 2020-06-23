@@ -14,3 +14,5 @@ figure-cv.pdf: figure-cv.R
 	R --vanilla < $<
 figure-cv-BIC.pdf: figure-cv-BIC.R
 	R --vanilla < $<
+figure-sequence-cv.pdf: figure-sequence-cv.R
+	R --vanilla < $<
