@@ -1,5 +1,9 @@
 source("packages.R")
 
+algo.colors <- c(
+  OPART="#0077CC",
+  LOPART="black",
+  SegAnnot="#22CC22")
 err.dt <- data.table(
   csv=Sys.glob("figure-label-errors-data/*.csv")
 )[, data.table::fread(
@@ -35,9 +39,16 @@ scale.fill <- scale_fill_gradient(
   "log10(seqs)",
   low="white",
   high="violet")
+scale.for <- function(algo){
+  scale_fill_gradient(
+    "log10(seqs)",
+    low="white",
+    high=algo.colors[[algo]])
+}  
 gg <- ggplot()+
   ##ggtitle("LOPART is more accurate than SegAnnot")+
-  my.title+
+  ggtitle("Best case comparison with SegAnnot")+
+  ##my.title+
   geom_abline(aes(
     slope=slope, intercept=intercept, color=test.errors),
     data=data.table(slope=1, intercept=0, test.errors="equal"))+
@@ -49,7 +60,8 @@ gg <- ggplot()+
   geom_text(aes(
     fewer.FN, fp, label=test.sets),
     data=SegAnnot.compare.counts)+
-  scale.fill+
+  ##scale.fill+
+  scale.for("SegAnnot")+
   coord_equal()+
   theme_bw()+
   scale_x_continuous(
@@ -110,7 +122,9 @@ train.test.counts <- total.min.wide[, .(
 ), by=.(train_OPART, test.diff)]
 gg <- ggplot()+
   ##ggtitle("LOPART is more accurate\nthan OPART")+
-  my.title+
+  ##my.title+
+  ggtitle("Best case comparison
+with OPART")+
   geom_hline(yintercept=0, color="grey")+
   geom_vline(xintercept=0, color="grey")+
   geom_tile(aes(
@@ -120,7 +134,8 @@ gg <- ggplot()+
   geom_text(aes(
     train_OPART, test.diff, label=splits),
     data=train.test.counts)+
-  scale.fill+
+  ##scale.fill+
+  scale.for("OPART")+
   coord_equal()+
   theme_bw()+
   scale_x_continuous(

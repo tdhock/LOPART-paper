@@ -111,7 +111,7 @@ gg <- ggplot()+
       " AUC=%.3f", auc
     )))),
     method=list(
-      cex=0.8,
+      cex=0.75,
       directlabels::polygon.method(
         "right",
         offset.cm=0.5,
@@ -139,13 +139,14 @@ gg <- ggplot()+
   scale_x_continuous(
     "False Positive Rate (test set labels)",
     breaks=c(0, 0.5, 1),
+    limits=c(0, 1.2),
     labels=c("0", "0.5", "1"))+
   scale_y_continuous(
     "True Positive Rate (test set labels)",
     breaks=c(0, 0.5, 1),
     labels=c("0", "0.5", "1"))
 ##print(gg)
-expansion <- 2.5
+expansion <- 2
 pdf("figure-cv-BIC-roc.pdf", width=3*expansion, height=2*expansion)
 print(gg)
 dev.off()
@@ -161,20 +162,11 @@ pred.point.dt[, fn := possible.fn-tp ]
 pred.point.dt[, errors := fn + fp ]
 pred.point.dt[, percent.error := 100*errors/labels]
 pred.point.dt[, Penalty.Params := paste0(Penalty, ".", Parameters)]
-gg <- ggplot()+
-  theme_bw()+
-  theme(panel.spacing=grid::unit(0, "lines"))+
-  geom_point(aes(
-    percent.error, Penalty.Params, color=model.name),
-    data=pred.point.dt)+
-  facet_grid(. ~ test.fold, labeller=label_both)+
-  scale_color_manual(values=algo.colors)
-
 pred.point.dt[, percent.accuracy := 100-percent.error]
 pred.point.vars <- melt(
   pred.point.dt,
   measure.vars=c("percent.accuracy", "auc"))
-ggplot()+
+gg.vars <- ggplot()+
   theme_bw()+
   theme(panel.spacing=grid::unit(0, "lines"))+
   geom_point(aes(
@@ -182,8 +174,7 @@ ggplot()+
     data=pred.point.vars)+
   facet_grid(test.fold ~ variable, labeller=label_both, scales="free")+
   scale_color_manual(values=algo.colors)
-
-ggplot()+
+gg.vars.wide <- ggplot()+
   theme_bw()+
   theme(panel.spacing=grid::unit(0, "lines"))+
   geom_point(aes(
@@ -191,7 +182,6 @@ ggplot()+
     data=pred.point.vars)+
   facet_grid(. ~ variable + test.fold, labeller=label_both, scales="free")+
   scale_color_manual(values=algo.colors)
-
 pred.point.wide <- dcast(
   pred.point.dt,
   test.fold + Penalty.Params ~ model.name,
@@ -201,8 +191,7 @@ pred.point.tall <- melt(
   measure.vars=c("OPART", "SegAnnot"),
   variable.name="competitor",
   value.name="percent.error")
-
-ggplot()+
+gg.comp <- ggplot()+
   theme_bw()+
   theme(panel.spacing=grid::unit(0, "lines"))+
   facet_grid(. ~ competitor)+
@@ -214,7 +203,19 @@ ggplot()+
     LOPART, percent.error, color=Penalty.Params),
     data=pred.point.tall)+
   coord_equal()
-
-pdf("figure-cv-BIC.pdf", width=4, height=2)
+gg <- ggplot()+
+  theme_bw()+
+  theme(panel.spacing=grid::unit(0, "lines"))+
+  geom_point(aes(
+    percent.accuracy, Penalty.Params, color=model.name),
+    shape=1,
+    data=pred.point.dt)+
+  facet_grid(. ~ test.fold, labeller=label_both)+
+  scale_color_manual(values=algo.colors)+
+  scale_x_continuous(
+    "Test accuracy (percent)",
+    limits=c(15, 85),
+    breaks=seq(20, 80, by=20))
+pdf("figure-cv-BIC.pdf", width=4, height=1.2)
 print(gg)
 dev.off()
