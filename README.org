@@ -2,15 +2,16 @@ Figures for Labeled Optimal PARTitioning paper
 
 - Figure 1: example data and cost computation. [[file:figure-signal-cost.R][R script]], [[file:figure-signal-cost-standAlone.pdf][standAlone
   pdf]], [[file:figure-signal-cost.tex][tex for inclusion in paper]].
-- Figure 2: timings. [[file:figure-timings.R][R script]], tex for inclusion in paper: [[file:figure-timings.tex][time vs
-  number of data]], [[file:figure-timings-labels.tex][time vs number of labels]].
-- Best case label error figures. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf (Fig 3 left)]], [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf (Fig 4 left)]].
-- Cross-validation label error figures. [[file:figure-cv.R][R script]], [[file:figure-cv.pdf][OPART pdf (Fig 3
-  right)]], [[file:figure-cv-SegAnnot.pdf][SegAnnot pdf (Fig 4 right)]], [[file:figure-cv-roc.pdf][Fig 5 ROC curves]].
-- Comparison with BIC figures. [[file:figure-cv-BIC.R][R script]], [[file:figure-cv-BIC-roc.pdf][ROC curves]], [[file:figure-cv-BIC.pdf][Error rates]].
-- Sequential cross-validation (fold 1 = first half of labels, fold 2 =
-  second half labels) figures. [[file:figure-sequence-cv.R][R script]], [[file:figure-sequence-cv-OPART.pdf][Best case OPART differences]],
-  [[file:figure-sequence-cv-SegAnnot.pdf][Best case SegAnnot differences]], [[file:figure-sequence-cv-roc.pdf][ROC curves]], [[file:figure-sequence-cv.pdf][Test error rates]].
+- Figure 2: timings. [[file:figure-timings.R][R script]], tex for inclusion in paper: [[file:figure-timings-labels.tex][time vs
+  number of labels (left)]], [[file:figure-timings.tex][time vs number of data (right)]].
+- Figure 3: Best case label error. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf (left)]],
+  [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf (right)]].
+- Comparison with BIC figures. [[file:figure-cv-BIC.R][R script]]:
+  - Figure 4: [[file:figure-cv-BIC.pdf][Error rates]].
+  - Figure 5: [[file:figure-cv-BIC-roc.pdf][ROC curves]].
+
+
+
 
 Reproducibility: use "make" with one of the recipes defined in
 [[file:Makefile]].
@@ -25,5 +26,11 @@ Reproducibility: use "make" with one of the recipes defined in
   and other penalty values:
   [[http://members.cbio.mines-paristech.fr/~thocking/figure-candidates-interactive/]]
 
+** Additional analyses
 
-  
+- Predicted constant penalty label error figures. [[file:figure-cv.R][R script]], [[file:figure-cv.pdf][OPART pdf]],
+  [[file:figure-cv-SegAnnot.pdf][SegAnnot pdf]], [[file:figure-cv-roc.pdf][ROC curves]].
+- Sequential cross-validation (fold 1 = first half of labels, fold 2 =
+  second half labels) figures. [[file:figure-sequence-cv.R][R script]], [[file:figure-sequence-cv-OPART.pdf][Best case OPART differences]],
+  [[file:figure-sequence-cv-SegAnnot.pdf][Best case SegAnnot differences]], [[file:figure-sequence-cv-roc.pdf][ROC curves]], [[file:figure-sequence-cv.pdf][Test error rates]].
+
