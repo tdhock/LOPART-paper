@@ -166,6 +166,13 @@ pred.point.dt[, percent.accuracy := 100-percent.error]
 pred.point.vars <- melt(
   pred.point.dt,
   measure.vars=c("percent.accuracy", "auc"))
+pred.point.diff <- dcast(
+  pred.point.vars,
+  test.fold + Penalty.Params + variable ~ model.name,
+  value.var="value")
+pred.point.diff[, diff := LOPART - OPART ]
+pred.point.diff[order(variable, Penalty.Params, test.fold), .(
+  variable, test.fold, Penalty.Params, diff)]
 gg.vars <- ggplot()+
   theme_bw()+
   theme(panel.spacing=grid::unit(0, "lines"))+
@@ -216,6 +223,6 @@ gg <- ggplot()+
     "Test accuracy (percent)",
     limits=c(15, 85),
     breaks=seq(20, 80, by=20))
-pdf("figure-cv-BIC.pdf", width=4, height=1.2)
+pdf("figure-cv-BIC.pdf", width=6, height=1.2)
 print(gg)
 dev.off()
