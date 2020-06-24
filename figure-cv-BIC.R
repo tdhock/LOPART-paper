@@ -95,9 +95,9 @@ pred.point.dt <- rbind(
   )]
 )[possible.dt, on=.(test.fold)]
 algo.colors <- c(
+  SegAnnot="#22CC22",
   OPART="#0077CC",
-  LOPART="black",
-  SegAnnot="#22CC22")
+  LOPART="black")
 gg <- ggplot()+
   theme_bw()+
   scale_color_manual(values=algo.colors)+
@@ -173,6 +173,11 @@ pred.point.diff <- dcast(
 pred.point.diff[, diff := LOPART - OPART ]
 pred.point.diff[order(variable, Penalty.Params, test.fold), .(
   variable, test.fold, Penalty.Params, diff)]
+pred.point.diff[, SegAnnot.diff := LOPART - SegAnnot ]
+pred.point.diff[
+  variable=="percent.accuracy"
+][order(test.fold, Penalty.Params), .(
+  test.fold, Penalty.Params, SegAnnot.diff)]
 gg.vars <- ggplot()+
   theme_bw()+
   theme(panel.spacing=grid::unit(0, "lines"))+
@@ -212,17 +217,24 @@ gg.comp <- ggplot()+
   coord_equal()
 gg <- ggplot()+
   theme_bw()+
-  theme(panel.spacing=grid::unit(0, "lines"))+
+  theme(
+    legend.position="bottom",
+    panel.spacing=grid::unit(0, "lines"))+
   geom_point(aes(
     percent.accuracy, Penalty.Params, color=model.name),
-    shape=1,
+    shape=18,
+    size=4,
     data=pred.point.dt)+
   facet_grid(. ~ test.fold, labeller=label_both)+
-  scale_color_manual(values=algo.colors)+
+  scale_color_manual(
+    "Algorithm",
+    values=algo.colors,
+    breaks=names(algo.colors)
+    )+
   scale_x_continuous(
-    "Test accuracy (percent)",
-    limits=c(15, 85),
+    "Test accuracy (percent correctly predicted labels)",
+    ##limits=c(15, 85),
     breaks=seq(20, 80, by=20))
-pdf("figure-cv-BIC.pdf", width=6, height=1.2)
+pdf("figure-cv-BIC.pdf", width=6, height=1.8)
 print(gg)
 dev.off()
