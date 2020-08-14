@@ -10,11 +10,14 @@ Figures for Labeled Optimal PARTitioning paper
   - Figure 4: [[file:figure-cv-BIC.pdf][Error rates]].
   - Figure 5: [[file:figure-cv-BIC-roc.pdf][ROC curves]].
 
-
-
-
 Reproducibility: use "make" with one of the recipes defined in
 [[file:Makefile]].
+
+TODOS
+- add SegAnnot to speed comparison.
+- accuracy/error comparison with combined baseline (use OPART for
+  unlabeled regions, SegAnnot for labeled regions).
+- citations to standard changepoint approaches (cusum, binseg).
 
 ** Presentation slides
 
