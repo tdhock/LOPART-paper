@@ -23,6 +23,10 @@ for(size.i in seq_along(size.vec)){
     FPOP={
       fpop::Fpop(signal, 5)
     },
+    SegAnnot={
+      SegAnnot::SegAnnot(
+        signal, as.integer(labels$start), as.integer(labels$end))
+    }, 
     OPART={
       LOPART::LOPART(signal, labels[0], 5)
     },
@@ -55,6 +59,10 @@ for(size.i in seq_along(size.vec)){
     some.labels <- labels[seq(1, .N, l=n.labels)]
     m.args <- list(
       LOPART=substitute(LOPART::LOPART(some.data, some.labels, 5)),
+      SegAnnot=substitute(
+        SegAnnot::SegAnnot(
+          some.data, as.integer(some.labels$start), as.integer(some.labels$end))
+      ), 
       FPOP=substitute(fpop::Fpop(some.data, 5)),
       times=3)
     if(n.data <= 40000){

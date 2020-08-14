@@ -4,6 +4,10 @@ algo.colors <- c(
   OPART="#0077CC",
   LOPART="black",
   SegAnnot="#22CC22")
+algo.colors <- c(
+  OPART="deepskyblue",
+  LOPART="black",
+  SegAnnot="blue")
 err.dt <- data.table(
   csv=Sys.glob("figure-label-errors-data/*.csv")
 )[, data.table::fread(

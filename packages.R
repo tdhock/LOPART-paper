@@ -53,6 +53,10 @@ works_with_R <- function(Rvers,...){
   }
 }
 
+if(!requireNamespace("SegAnnot")){
+  install.packages("SegAnnot", repo="https://R-Forge.R-project.org")
+}
+
 options(repos=c(
   "http://cloud.r-project.org"))
 library(LOPART)
