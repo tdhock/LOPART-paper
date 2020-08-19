@@ -39,7 +39,7 @@ gg <- ggplot()+
     "Number of labels $M$",
     limits=c(1, 8000),
     breaks=10^seq(0, 3))+
-  scale_y_log10()+
+  scale_y_log10("Computation time (sec.)")+
   theme_bw()
 dl <- directlabels::direct.label(gg, list(cex=0.7, "last.qp"))
 tikz("figure-timings-labels.tex", width=2.5, height=2)
@@ -86,7 +86,7 @@ with $O(N)$ positive labels")+
   directlabels::geom_dl(aes(
     size, median, label=Algorithm, color=Algorithm),
     data=timing.stats[size==max(size)],
-    method="last.qp")+
+    method=list(cex=0.75, "last.qp"))+
   geom_text(aes(
     size, median, label=Algorithm, color=Algorithm),
     hjust=1,
@@ -97,7 +97,7 @@ with $O(N)$ positive labels")+
     "Number of data $N$",
     limits=10^c(0.5, 7),
     breaks=10^seq(1, 5, by=2))+
-  scale_y_log10()
+  scale_y_log10("Computation time (sec.)")
 tikz("figure-timings.tex", width=3.3, height=2)
 print(gg)
 dev.off()
