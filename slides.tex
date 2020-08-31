@@ -42,11 +42,111 @@
   toby.hocking@nau.edu\\
   joint work with Anuraag Srivastava}
 
-\date{6 June 2020}
+%c\date{6 June 2020}
 
 \maketitle
 
-\section{Demo}
+\section{Introduction: supervised changepoint detection for cancer diagnosis with DNA copy number data}
+
+\begin{frame}
+  \frametitle{Cancer cells show chromosomal copy number alterations}
+  Spectral karyotypes show the number of copies of the sex chromosomes
+  (X,Y) and autosomes (1-22). 
+
+  Source: Alberts \emph{et al.} 2002.
+\vskip 0.1in
+  \includegraphics[width=\textwidth]{Karyo-both}
+\vskip 0.1in
+  \begin{minipage}{0.4\linewidth}
+    Normal cell with 2 copies of each autosome.
+  \end{minipage}
+\hskip 0.1\linewidth
+  \begin{minipage}{0.4\linewidth}
+Cancer cell with many copy number alterations.
+  \end{minipage}
+\end{frame}
+
+\begin{frame}
+  \frametitle{DNA copy number profiles from neuroblastoma patients with or without relapse}
+
+  \hspace*{-1cm}
+  \includegraphics[width=1.15\textwidth]{figure-neuroblastoma-clinical}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Previous work: SegAnnDB interactive machine learning
+    system}
+
+  \includegraphics[width=\textwidth]{screenshot-SegAnnDB-figure-1}
+
+  Hocking \emph{et al.}, 2014. 
+
+  \begin{itemize}
+  \item User uploads noisy data sets for machine learning analysis.
+  \item User can provide labels which indicate presence(1) or
+    absence(0) of changepoints in specific regions of data sets.
+  \item Classic optimal changepoint model (max penalized Gaussian
+    likelihood) used if it has zero label errors. OPART algorithm,
+    Jackson \emph{et al.}, 2005. FPOP algorithm, Maidstone \emph{et
+      al.}, 2016. 
+  \item Label-aware SegAnnot algorithm used otherwise (Hocking and
+    Rigaill, 2012). Always zero train label errors, but never predicts
+    any changepoints outside of positive(1) labels.
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Example noisy data sequence}
+
+  \includegraphics[width=\textwidth]{figure-baselines-data} 
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Example noisy data sequence with labels}
+
+  \includegraphics[width=\textwidth]{figure-baselines-labels}  
+  
+\end{frame}
+
+\input{figure-baselines}
+
+\section{Labeled Optimal Partitioning (LOPART)}
+
+\begin{frame}
+  \frametitle{Baseline/previous OPART algorithm}
+
+  Assume
+  \begin{itemize}
+  \item $\mathbf x = [ x_1 \cdots x_N ]$ is the sequence of $N$ data,
+  \item $\ell$ is a loss function (e.g. square loss),
+  \item $I$ the indicator function counts the number of changes,
+  \item $\lambda$ is a non-negative penalty (larger for fewer changes).
+  \end{itemize}
+  Then the problem and algorithm are
+  \begin{eqnarray*}
+    \label{eq:op}
+    \hat C_N &=& \min_{\mathbf m\in \mathbb R^N}
+                 \sum_{i=1}^N \ell(m_i, x_i) + 
+                 \lambda \sum_{i=1}^{N-1} I[m_i \neq m_{i+1}].\\
+             &=& \min_{\tau\in \{0, 1, \dots, N-1\} }
+                 \hat C_\tau +
+                 \lambda +
+                 L(\tau+1, N, \mathbf x).
+                 \label{eq:op-update}
+  \end{eqnarray*}
+  where
+  \begin{itemize}
+  \item $\tau$ is the last changepoint optimization variable,
+  \item $\hat C_\tau$ is the optimal cost computed in previous iteration $\tau$,
+  \item $L$ is the cost of the last segment.
+  \end{itemize}
+
+\end{frame}
+
+\section{LOPART Demo}
 
 % from https://tex.stackexchange.com/questions/160825/modifying-margins-for-one-slide
 \newcommand\Wider[2][3cm]{%
@@ -58,5 +158,50 @@
 }
 
 \input{figure-candidates}
+
+\section{Results and Discussion}
+
+\begin{frame}
+  \frametitle{Empirical time complexity (labels)}
+  \input{figure-timings-labels}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Empirical time complexity (data)}
+  \input{figure-timings}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{figure-label-errors}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{figure-label-errors-SegAnnot}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Test accuracy in cross-validation experiments}
+  \includegraphics[width=\textwidth]{figure-cv-BIC}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Test ROC curves in cross-validation experiments}
+  \includegraphics[width=\textwidth]{figure-cv-BIC-roc}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Summary and Discussion}
+  \begin{itemize}
+  \item Proposed algo fixes issues with two previous algorithms (better
+  train AND test accuracy).
+\item Results demonstrate improved speed and accuracy.
+\item Future work: functional pruning algorithm, which can solve more
+  complex constrained changepoint problems (e.g. change must be
+  non-decreasing), and should be faster (log-linear instead of
+  quadratic).
+  \end{itemize}
+\end{frame}
 
 \end{document}

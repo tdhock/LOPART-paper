@@ -1,5 +1,7 @@
-slides.pdf: slides.tex figure-candidates.tex
+slides.pdf: slides.tex figure-candidates.tex figure-baselines.tex
 	pdflatex slides
+figure-baselines.tex: figure-baselines.R
+	R --vanilla < $<
 figure-candidates.tex: figure-candidates.R
 	R --vanilla < $<
 figures.pdf: figures.tex figure-signal-cost.tex figure-label-errors.pdf figure-timings.tex

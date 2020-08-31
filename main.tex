@@ -1,0 +1,754 @@
+\documentclass[12pt]{article}
+  
+\usepackage{fullpage}
+\usepackage[ruled,vlined,algo2e,linesnumbered]{algorithm2e}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}  
+\usepackage{amsfonts}      
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage{tikz}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\minimize}{minimize}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+\title{Labeled Optimal Partitioning}
+
+\author{
+  Toby Dylan Hocking, 
+  \texttt{toby.hocking@nau.edu} \\
+  Anuraag Srivastava,
+  \texttt{as4378@nau.edu}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  In data sequences measured over space or time, an important problem is accurate detection of abrupt changes. 
+  In partially labeled data, it is important to correctly predict presence/absence of changes in positive/negative labeled regions, in both the train and test sets.
+  One existing dynamic programming algorithm is designed for prediction in unlabeled test regions (and ignores the labels in the train set); another is for accurate fitting of train labels (but does not predict changepoints in unlabeled test regions).
+  We resolve these issues by proposing a new optimal changepoint detection model that is guaranteed to fit the labels in the train data, and can also provide predictions of unlabeled changepoints in test data.
+  We propose a new dynamic programming algorithm, Labeled Optimal Partitioning (LOPART), and we provide a formal proof that it solves the resulting non-convex optimization problem.
+  We provide theoretical and empirical analysis of the time complexity of our algorithm, in terms of the number of labels and the size of the data sequence to segment.
+  Finally, we provide empirical evidence that our algorithm is more accurate than the existing baselines, in terms of train and test label error.
+\end{abstract}
+
+\section{Introduction}
+
+In the context of fields such as medical monitoring \citep{Fotoohinasab2020} and genomics \citep{HOCKING-penalties}, where data are measured over space or time, detecting abrupt changes is an important problem.
+There are many different algorithms available for detecting changepoints, and in this paper we focus on algorithms that compute a solution to a well-defined mathematical optimization problem. 
+For example, the classical optimal partitioning (OPART) algorithm was introduced by \citet{Jackson2005} in order to solve the penalized changepoint problem for a sequence of $N$ data $\mathbf x = [ x_1 \cdots x_N ]$. 
+Inferring the most likely parameter vector $\mathbf m$ corresponds to minimizing a sum of losses $\ell$ plus a penalty $\lambda$ for each changepoint:
+\begin{equation}
+    \label{eq:op}
+    \hat C_N = \min_{\mathbf m\in \mathbb R^N}
+    \sum_{i=1}^N \ell(m_i, x_i) + 
+    \lambda \sum_{i=1}^{N-1} I[m_i \neq m_{i+1}].
+\end{equation}
+The loss function $\ell(m, x)$ is typically the negative log likelihood of the parameter $m$ given the data $x$; smaller loss values indicate a better fit. 
+The indicator function $I$ returns 1 if there is a change between positions $i$ and $i+1$, and it returns 0 otherwise. 
+The penalty parameter $\lambda\geq 0$ controls the number of detected changepoints 
+(small $\lambda$ results in an overfit model with too many changepoints, large $\lambda$ results in an underfit model with too few changepoints).
+The penalty $\lambda$ can be selected using theoretically-motivated unsupervised criteria such as AIC/BIC \citep{Akaike73, Schwarz78, Yao88, mBIC}, or using supervised learning algorithms in the labeled data setting \citep{HOCKING-penalties}.
+
+Although the loss $\ell$ is typically convex, the indicator functions $I$ are non-convex, so the optimization problem is non-convex, and gradient-based algorithms can not be used. 
+Instead, there are efficient dynamic programming algorithms which can compute a global optimum in quadratic $O(N^2)$ time \citep{segment-neighborhood,Jackson2005}. 
+More recently, functional pruning algorithms such as FPOP \citep{Maidstone2016} have been used to compute a global optimum, with time complexity that is also quadratic $O(N^2)$ in the worst case, but log-linear $O(N\log N)$ empirically. 
+
+\begin{table}[t]
+    \centering
+    \begin{tabular}{ccc}
+    \hline
+         & Best model with $K$ segments & Best model for penalty $\lambda$  \\
+         \hline
+    No label constraints & Segment Neighborhood & Optimal Partitioning \\
+    & \citep{segment-neighborhood} & \citep{Jackson2005} \\
+    \hline
+    Label constraints & SegAnnot & LOPART \\
+    & \citep{Hocking2014} & \textbf{This paper}\\
+    \hline
+    \end{tabular}
+    \caption{Relationship of the proposed LOPART algorithm to previous dynamic programming algorithms for changepoint detection (rows for constraints, columns for problem formulation). 
+    The previous SegAnnot algorithm has the same label constraints but a different problem formulation which makes it impossible to predict new changepoints in unlabeled regions (may have test errors). 
+    The previous Optimal Paritioning algorithm has the same problem formulation which can predict new changepoints in unlabeled regions, but ignores the given labels (may have train errors).
+    }
+    \label{tab:algos}
+\end{table}
+
+\paragraph{Novelty with respect to previous work.} Our paper proposes a new changepoint detection algorithm for the case of partially labeled data sequences.
+The labeled data setting arises in the context of interactive systems such as SegAnnDB \citep{Hocking2014} and CpLabel \citep{Ford2020} which allow users to view the data and drag with the mouse to define regions with/without significant changepoints in subsets of the data.
+The previous OPART and FPOP algorithms can be characterized as ``unsupervised'' because the labels are not used, so they may be inconsistent with the labels (train errors).
+In contrast the previous SegAnnot algorithm has constraints which ensure the changepoints are consistent with the labels \citep{Hocking2014}, but there are no other changepoints outside the labels (test errors). 
+In this paper we resolve both issues, resulting in our new Labeled Optimal Partitioning (LOPART) algorithm which is more accurate in terms of both train and test errors (Section~\ref{sec:accuracy}). 
+The novelty of LOPART is that it combines the label constraints of SegAnnot with the penalized formulation of OPART (Table~\ref{tab:algos}).
+
+\section{Changepoint model for labeled data}
+
+\subsection{Labeled data setting}
+
+In the context of changepoint detection we have a sequence of $N$ data points to segment,
+$\mathbf x = [ x_1 \cdots x_N ]$, and the goal is to predict a set of positions $f(\mathbf x)\subseteq \{1, \dots, N-1\}$ with significant changepoints immediately after.
+%From a machine learning perspective, changepoint detection is typically treated as an unsupervised learning problem (labels are not typically provided, although our paper/algorithm does use them, as described below).
+For example, we will treat the simple case of real-valued univariate data $x_1, \dots, x_N \in \mathbb R$ which occur in settings such as detection of copy number changes in cancer genomics \citep{HOCKING-penalties, Hocking2014}. In this setting we typically use the square loss $\ell(m, x)=(m-x)^2$ for a predicted mean parameter $m$ and a data value $x$. However we note that it is straightforward to generalize our algorithm to other kinds of data, by changing the loss function.
+
+We assume the same kind of supervision/labels as were used with the previous SegAnnot algorithm \citep{Hocking2014}. We have a set of $M$ labels
+$\mathcal Y=\{(\underline p_j, \overline p_j, y_j)\}_{j=1}^M$. Each label $j\in\{1,\dots, M\}$ has three attributes:
+$\underline p_j\in\{1, \dots, N-1\}$ is the start of a labeled region,
+$\overline p_j \in \{2, \dots, N\}$ is the end of a labeled region, and $y_j\in\{0,1\}$ is the number of changes expected in the region
+$[\underline p_j, \overline p_j]$. 
+Note that we could generalize the algorithm to support other kinds of $y_j$ values, but in this paper we only study 0/1 labels.
+In this labeled data setting we want a changepoint prediction $f(\mathbf x)\subseteq \{1, \dots, N-1\}$ which minimizes the number of incorrectly predicted labels.
+% \begin{itemize}
+% \item $\underline p_j\in\{1, \dots, N-1\}$ is the start of a labeled region,
+% \item $\overline p_j \in \{2, \dots, N\}$ is the end of a labeled region,
+% \item $y_j\in\{0,1\}$ is the number of changes in the region
+%   $[\underline p_j, \overline p_j]$. Note that we could generalize the algorithm to support other kinds of $y_j$ values, but here we focus on 0/1 labels, and save those generalizations for future work.
+% \end{itemize}
+
+For example
+$\mathcal Y=\{
+(\underline p_1=1,\overline p_1=2,c_1=0),
+(\underline p_2=4,\overline p_2=7,c_2=1)
+\}$ 
+means that there is no change after the first data point, 
+there can be 0--2 changes between data points 2 and 4 (four possibilities: no changes, change after 2, change after 3, or change after both),
+and there must be exactly one change somewhere
+between data points 4 and 7 (three possibilities). 
+A more complex example with $M=3$ labels is shown in Figure~\ref{fig:signal-cost}. 
+%TODO DP graph?
+This example shows how the labels are typically used to encode prior knowledge about the expected/desired changepoints. 
+A positive label is typically used in a region with a change of low signal/noise ratio (e.g. a change in mean from 7 to 8 after position 50).
+A negative label is typically used in a region with outliers (e.g. at position 86).
+
+For the remainder of the paper we assume the
+labeled regions are ordered:
+\begin{equation}
+  \label{eq:sorted}
+  1 \leq 
+\underline p_1 < \overline p_1 \leq 
+\underline p_2 < \overline p_2 \leq
+\cdots \leq 
+\underline p_M < \overline p_M \leq 
+N.
+\end{equation}
+If this is not the case, we can sort them in log-linear $O(M\log M)$ time using standard algorithms.
+The number of possible labels is $M\in\{0, 1, \dots, N-1\}$.
+
+\begin{figure}
+    \input{figure-signal-cost}
+    \vskip -0.5cm
+    \caption{
+    Example with $N=100$ data (grey circles) and $M=3$ labels (colored rectagles), 
+    showing the novelty of the proposed LOPART algorithm (black) with respect to the classical OPART algorithm (blue). Both algorithms were run with the square loss and a penalty of $\lambda=10$.
+    \textbf{Top:} LOPART changepoints (vertical lines) are consistent with 
+    %the labels, whereas OPART changepoints are not consistent.
+    all three labels, whereas the OPART model is inconsistent with the second label (should have $y_2=1$ change but OPART predicts 0) and the third label (should have $y_3=0$ changes but OPART predicts 2).
+    \textbf{Bottom:} when computing the optimal cost up to position $t=100$ the dynamic programming algorithms minimize over each possible last changepoint $\tau$ using (\ref{eq:op-update}) for OPART and (\ref{eq:lopart-update}) for LOPART (infeasible $\tau$ are shown with infinite cost at the top of the panel). 
+    }
+    \label{fig:signal-cost}
+\end{figure}
+
+\subsection{Optimization problem with label constraints}
+
+The main new idea of our model is to add constraints to original optimal partitioning problem~(\ref{eq:op}) in order to ensure that the changepoints predicted by the model are consistent with the labels. This is similar to the idea of SegAnnot \citep{Hocking2014}, which adds constraints based on the labels to the segment neighborhood problem (Table~\ref{tab:algos}).
+
+To determine whether or not the predicted changepoints are consistent with the given labels, we need to count the number of predicted changes in each labeled region $[\underline p_j, \overline p_j]$. To do that we define 
+$$
+H(\underline p, \overline p, \mathbf m) =
+    \sum_{i=\underline p}^{\overline p-1}
+    I[m_i \neq m_{i+1}],
+$$
+which counts the number of changepoints in the mean vector $\mathbf m$.
+If the predicted number of changes $H(\underline p_j, \overline p_j, \mathbf m)$ is equal to the expected number of changes $y_j$, then the model $\mathbf m$ is considered to be consistent with the label $j$.
+To define the optimization problem that we would like to solve, we first define an abbreviation for the cost function, which is the same as in the previous problem~(\ref{eq:op}). The cost of a mean vector $\mathbf m$ with penalty $\lambda$ from data point $\underline p$ to data point $\overline p$ is 
+$$
+    \mathcal C(\underline p, \overline p, \mathbf m, \mathbf x, \lambda) = 
+    \sum_{i=\underline p}^{\overline p} 
+    \ell(m_i, x_i) 
+    +\lambda
+    H(\underline p, \overline p, \mathbf m).
+$$
+Now we can define the labeled optimal partitioning problem using this cost function and a constraint for each label,
+\begin{align}
+ \min_{
+  \mathbf m\in\mathbb R^{N}
+  } &\ \ 
+  \label{eq:labeled_problem_cost}
+\mathcal C(1, N, \mathbf m, \mathbf x, \lambda)
+\\
+    \text{subject to} 
+& \ \ \text{ for all } j\in\{1,\dots,M\},\, 
+H(\underline p_j, \overline p_j, \mathbf m)=y_j.
+\label{eq:labeled_problem_constraints}
+\end{align}
+There is one constraint per label $j\in\{1,\dots, M\}$ (\ref{eq:labeled_problem_constraints}),
+and each constraint ensures that the labeled number of changes $y_j$ is predicted between $\underline p_j$ and $\overline p_j$.
+
+\section{New Dynamic Programming Algorithm}
+
+Our main contribution is the first algorithm which computes an optimal solution to problem~(\ref{eq:labeled_problem_cost}). In this section we first present some related sub-problems which also need to be solved, then prove the dynamic programming update rules, and finally give pseudocode for the algorithm.
+
+\subsection{Related optimization problems}
+
+Because our algorithm is based on ideas used to solve the optimal partitioning problem~(\ref{eq:op}), we first review that algorithm \citep{Jackson2005}. We need to compute the optimal loss given a single segment with mean parameter $\mu$ starting at $\underline p$ and ending at $\overline p$, which is 
+\begin{equation}
+    \label{eq:L}
+L(\underline p, \overline p, \mathbf x) = 
+    \min_{\mu\in\mathbb R}
+    \sum_{i=\underline p}^{\overline p}
+    \ell(\mu, x_i).
+\end{equation}
+Note that for many data types and loss functions, one optimal loss value $L(\underline p, \overline p, \mathbf x)$ can be computed in constant $O(1)$ time (e.g. with real-valued data and the square loss, given cumulative sums of the data). 
+The dynamic programming algorithm recursively computes the optimal cost in terms of the last changepoint $\tau$,
+% \begin{eqnarray}
+%   %\min_{\mathbf m\in \mathbb R^N}
+%   %\mathcal C(1, N, \mathbf m, \mathbf x, \lambda)
+%   \hat C_N
+%   &=& \min \begin{cases}
+%   L(1, N, \mathbf x)  & \text{ if } \tau = 0\\
+%   L(2, N, \mathbf x) + \lambda + 
+% %   \min_{\mathbf m\in \mathbb R} 
+% %   \mathcal C(1, 1, \mathbf m, \mathbf x, \lambda)
+% \hat C_1
+%   & \text{ if } \tau=1\\  
+% %   L(3, N, \mathbf x) + \lambda + 
+% %   \min_{\mathbf m\in \mathbb R^2} 
+% %   \mathcal C(1, 2, \mathbf m, \mathbf x, \lambda)
+% %   & \text{ if } \tau=2\\
+%   \vdots\\
+%   L(N, N, \mathbf x) + \lambda + 
+% %   \min_{\mathbf m\in \mathbb R^{N-1}} 
+% %   \mathcal C(1, N-1, \mathbf m, \mathbf x, \lambda)
+% \hat C_{N-1}
+%   & \text{ if } \tau=N-1
+%   \end{cases}\\
+%   &=& \min_{\tau\in \{0, 1, \dots, N-1\} }
+%   L(\tau+1, N, \mathbf x) +
+%   \lambda +
+%   \hat C_\tau .
+%   \label{eq:op-update}
+% \end{eqnarray}
+\begin{equation}
+  \hat C_N
+  = \min_{\tau\in \{0, 1, \dots, N-1\} }
+  \hat C_\tau +
+  \lambda +
+  L(\tau+1, N, \mathbf x).
+  \label{eq:op-update}
+\end{equation}
+Note that for $\tau=0$, there is only one segment (no changepoints), and we let $\hat C_0=-\lambda$ so that in (\ref{eq:op-update}) we can write the optimal cost in the same way for each value of $\tau$. 
+%If computing the cost of each candidate $\tau$ is constant $O(1)$ time, the computation of each $\hat C_t$ is $O(t)$ time, and so the overall time to compute $\hat C_N$ is $O(N^2)$ is 
+In this paper we propose an algorithm for solving (\ref{eq:labeled_problem_cost}) based on similar ideas. The novelty of our algorithm is that it also accounts for the label constraints (\ref{eq:labeled_problem_constraints}), which reduce the space of possible changepoint $\tau$ values that we need to search. 
+To be clear about which constraints are involved in each sub-problem that we need to solve, we first define for any data point $t\in\{1,\dots, N\}$ the index of the last label that we need to consider when computing the cost up to that data point,
+\begin{equation}
+    \label{eq:J_t}
+    J_t = \max \{0\} \cup \{j: \underline p_j < t\}.
+\end{equation}
+We can then define the cost of the model up to $t$ data points that is consistent with all of the labels up to $J_t$,
+\begin{align}
+ C_t = \min_{
+  \mathbf m\in\mathbb R^{t}
+  } &\ \ 
+  \label{eq:C_t}
+\mathcal C(1, t, \mathbf m, \mathbf x, \lambda)
+\\
+    \text{subject to} 
+& \ \ \text{ for all } j \leq J_t,\, 
+H(\underline p_j, \overline p_j, \mathbf m)=y_j.
+\end{align}
+It is clear that $C_N$ as defined by (\ref{eq:C_t}) is equivalent to the original problem we want to solve (\ref{eq:labeled_problem_cost}). 
+However it does not admit a simple recursion as with $\hat C_N$ in (\ref{eq:op-update}).
+For example, consider $N=3$ data with $M=1$ label that forces exactly one change $(\underline p_1=1, \overline p_1=3, y_1=1)$. 
+% At the first data point $J_1=0$ so no constraints are considered and the optimal cost is $C_1=L(1, 1, \mathbf x)$. At the second data point $J_2=1$ so the label constraint $H(1, 3, \mathbf m)=1$ ensures that there is a changepoint ($m_1\neq m_2$), and in fact the optimal cost can be written recursively $C_2=C_1+\lambda+L(2, 2, \mathbf x)$. However at the third data point $J_$
+The optimal cost can be written as
+\begin{eqnarray}
+  C_3
+  &=& \min \begin{cases}
+  L(1, 1, \mathbf x)+L(2, 3, \mathbf x) + \lambda 
+  & \text{ if } \tau=1\\  
+  L(1, 2, \mathbf x)+L(3, 3, \mathbf x) + \lambda
+  & \text{ if } \tau=2.
+  \end{cases}
+  \label{eq:C_3}
+\end{eqnarray}
+First note that $\tau=0$ (no changepoint) is not a possibility because of the label constraint. 
+Also note that if $\tau=1$ the cost can be written recursively, i.e. $C_3 = C_1 + L(2, 3, \mathbf x) + \lambda$. 
+However for $\tau=2$ there is no recursion involving $C_2$, and in fact $C_2$ is not even well-defined, because the constraint is $H(1,3,\mathbf m)=I[m_1\neq m_2]+I[m_2\neq m_3]=1$ but in (\ref{eq:C_t}) there are only two optimization variables $m_1,m_2$ ($m_3$ is undefined).
+
+To resolve this issue we need another optimization problem which ensures that there are no changes in the most recent label. 
+Therefore we define another optimal cost value $V_t$ which we will compute for all $t$ that occur inside the labeled regions,
+\begin{align}
+ V_t = \min_{
+  \mathbf m\in\mathbb R^{t}
+  } &\ \ 
+  \label{eq:V_t_cost}
+\mathcal C(1, t, \mathbf m, \mathbf x, \lambda)
+\\
+    \text{subject to} 
+& \ \ \text{ for all } j < J_t,\, 
+H(\underline p_j, \overline p_j, \mathbf m)=y_j,
+\label{eq:V_t_prev_constraints}\\
+\text{and} 
+& \ \ 
+H(\underline p_{J_t}, t, \mathbf m)=0.
+\label{eq:V_t_recent_constraint}
+\end{align}
+Note that this optimization problem (\ref{eq:V_t_cost}) has the same objective function as (\ref{eq:C_t}) but two kinds of constraints. The first $J_t-1$ constraints (\ref{eq:V_t_prev_constraints}) ensure that the model is consistent with all labels before label $J_t$. The last constraint (\ref{eq:V_t_recent_constraint}) ensures that there are no changes in the current label $J_t$. 
+Continuing the example with $N=3$ data points above (\ref{eq:C_3}), we see that $C_3$ can be written in terms of $C_1$ and $V_2$:
+\begin{eqnarray}
+  C_3
+  &=& \min \begin{cases}
+  C_1 +L(2, 3, \mathbf x) + \lambda 
+  & \text{ if } \tau=1\\  
+  V_2 +L(3, 3, \mathbf x) + \lambda
+  & \text{ if } \tau=2.
+  \end{cases}
+  \label{eq:C_3_recursive}
+\end{eqnarray}
+This example shows that in this case, to compute the final optimal cost $C_N$, we need to compute either $C_t$ or $V_t$ for each $t<N$.
+In the next section we prove that this logic can be used for any set of labeled data.
+
+\subsection{Dynamic programming update rules}
+
+To state the rules of the dynamic programming algorithm, we first need to define the optimal cost that we will result in a recursion. For any data point $t\in\{1, \dots, N\}$ we define the optimal cost to be
+\begin{equation}
+    W_t = \begin{cases}
+    V_t & \text{ if } t\in \{\underline p_j + 1, \dots, \overline p_j - 1\} \text{ for some label } j \\
+    C_t & \text{ otherwise.}
+    \end{cases}
+\end{equation}
+This definition uses the $V_t$ cost (current label constrained to have no changes) for data points $t$ inside labels, and the standard cost $C_t$ otherwise (model must be consistent with all previous labels). In particular it is clear that $W_N=C_N$ is equivalent to the optimal cost of all $N$ data that we would like to compute (\ref{eq:labeled_problem_cost}).
+We also need to define the set of previous changepoints that we will search over to compute the optimal cost. We define this set recursively, starting with $T_0=\{\}$ (empty set) and then for any $t\in\{1, \dots, N\}$:
+\begin{equation}
+    T_t = \begin{cases}
+    T_{t-1} & \text{ if } 
+    \exists j: y_j=0 \text{ and } 
+    t\in \{\underline p_j + 1, \dots, \overline p_j \}\\
+    T_{t-1} & \text{ if } 
+    \exists j: y_j=1 \text{ and } 
+    t\in \{\underline p_j + 1, \dots, \overline p_j - 1\}\\
+    \{\underline p_j, \dots, t-1\} & \text{ if } 
+    \exists j: y_j=1 \text{ and } 
+    t= \overline p_j \\
+    T_{t-1}\cup \{t-1\} & \text{ otherwise.} 
+    \end{cases}
+    \label{eq:T_t}
+\end{equation}
+The first two cases of this definition require no changepoints to be added to the set, for all data points $t$ that are inside a label (or at the end of a negative $y_j=0$ label). 
+The third case only applies to data points $t$ that occur at the end of a positive $y_j=1$ label, and reinitializes the set to positions within that label. 
+The final case is used for data points $t$ in unlabeled regions (or at the start of a label), and adds one possible changepoint at the previous data point $t-1$.
+We can now give the following definition for the dynamic progamming update rules.
+\begin{definition}[Dynamic programming algorithm for labeled optimal partitioning]
+The cost is initialized $\tilde W_0 = -\lambda$ and dynamic programming updates can be computed for any $t\in\{1, \dots, N\}$ via
+\begin{equation}
+    \tilde W_t = \min_{\tau \in T_t} \tilde W_\tau + \lambda + L(\tau+1, t, \mathbf x).
+    \label{eq:lopart-update}
+\end{equation}
+\end{definition}
+Note the similarity with the update rules for the unconstrained problem~(\ref{eq:op-update}). 
+In fact the only difference is optimization of the last changepoint $\tau$ over $T_t$ rather than $\{0, 1, \dots, t-1\}$. 
+%Another difference is the use of the constrained cost $\tilde W_\tau$ rather than the unconstrained cost $ \hat C_\tau$. 
+If there are no labels, then $\tilde W_t=\hat C_t$ and $T_t=\{0, 1, \dots, t-1\}$ for all $t$, so the unconstrained (\ref{eq:op-update}) and constrained (\ref{eq:lopart-update}) dynamic programming update rules are identical in this case. 
+In general, we have the following theorem which proves the optimality of the recursive dynamic progamming update rules.
+\begin{theorem}
+The recursively computed cost $\tilde W_t$ is equal to the optimal cost $W_t$ for all data points $t\in\{1, \dots, N\}$.
+\end{theorem}
+\begin{proof}
+The proof is by induction. 
+The base case is $t=1$ for which the set of changepoints is $T_1=\{0\}$ and the recursive cost is $\tilde W_1=\tilde W_0 + \lambda + L(1, 1, \mathbf x)  =C_1=W_1$.
+
+Now for any $t\in\{2,\dots, N\}$, we assume that for all $\tau<t$ we have $\tilde W_\tau=W_\tau$ (induction hypothesis), and we aim to prove that $\tilde W_t = W_t$.
+We proceed by considering the different cases that are possible. 
+\paragraph{Case 1: inside a labeled region.} 
+We assume $t\in \{ \underline p_j+1, \dots, \overline p_j-1\}$ for some label $j=J_t$, so $W_t=V_t$ is the optimal cost subject to no changes from $\underline p_j$ to $t$, i.e. $H(\underline p_j, t, \mathbf m)=0$ from (\ref{eq:V_t_recent_constraint}) which implies a upper bound on the last changepoint $\tau<\underline p_j$. 
+If there are no previous positive labels then the set of possible last changes is $\{0, \dots, \underline p_j - 1\}\setminus \mathcal A^0$ where $A^0=\cup_{k:y_k=0}\{\underline p_k, \dots, \overline p_k-1\}$ is the set of all negative labeled regions. 
+If there is at least one previous positive label $k$ then the set of possible last changes is $\{\underline p_{k}, \dots, \underline p_j - 1\}$. 
+In both cases the set of possible changes is equal to the recursively defined set $T_t$. 
+For any $\tau\in T_t$ we have $W_\tau=V_\tau$ if $\tau\in\{ \underline p_j+1,\dots, \overline p_j-1\}$ for some label $j$, and $W_\tau=C_\tau$ otherwise.
+Therefore the optimal cost can be written as $W_t=V_t=\min_{\tau\in T_t} W_\tau + \lambda + L(\tau+1, t, \mathbf x)$, which by the induction hypothesis equals $\min_{\tau\in T_t} \tilde W_\tau + \lambda + L(\tau+1, t, \mathbf x) = \tilde W_t$.
+\paragraph{Case 2: outside a labeled region.}
+We assume $t\not \in \{ \underline p_j+1, \dots, \overline p_j-1\}$ for any label $j$, so $W_t=C_t$ is the optimal cost subject to all previous labels.
+If there are no previous positive labels then the set of possible last changes is $\{0, \dots, t-1\}\setminus \mathcal A^0$.
+If there is at least one previous positive label $k$ then the set of possible last changes is $\{\underline p_{k}, \dots, t - 1\}\setminus \mathcal A^0$.
+In both cases this set of possible last changes is equal to the recursively defined set $T_t$. Therefore, using an argument analogous to case 1, the optimal cost is $W_t=C_t=\tilde W_t$, which completes the proof of optimality of the recursive update rules.
+\end{proof}
+
+\subsection{Pseudocode, implementation, complexity}
+
+%In this section we give pseudocode for the LOPART dynamic programming algorithm.
+
+
+Algorithm~\ref{algo:lopart} (LOPART) inputs a data vector $\mathbf x$, a non-negative penalty parameter $\lambda$, and a set of $M$ labels which are assumed to be sorted in increasing order (line~\ref{line:inputs}). 
+On line~\ref{line:init} the algorithm initializes the cost $W_0$ and possible changepoints $T_0$. 
+The for loop on line~\ref{line:for} implements the dynamic programming for all data points $t$ from 1 to $N$. 
+Since any changepoint $\tau\in\mathcal A^0$ (in a negative label) never appears in any set $T_t$ (\ref{eq:T_t}), we can further optimize the algorithm by running the dynamic programming computations of $T_t,W_t,\tau_t^*$ for $t\not \in A^0$ (outside of negative labels).
+Line~\ref{line:T_update} updates the set of possible changepoints using (\ref{eq:T_t}). 
+Line~\ref{line:W_update} implements update rule~(\ref{eq:lopart-update}), storing the optimal cost in $W_t$ and the optimal last changepoint in $\tau^*_t$. 
+Overall the algorithm is similar to the original optimal partitioning algorithm, but with a more complex update rule on line~\ref{line:T_update} (which exploits the structure of the labels).
+
+
+\begin{algorithm2e}[H]
+\SetAlgoLined
+ \caption{Labeled Optimal Partitioning (LOPART)}\label{algo:lopart}
+Input: Data $\mathbf x\in\mathbb R^N$, 
+penalty $\lambda\in[0, \infty)$, 
+labels $\mathbf y\in\{0,1\}^M$, 
+positions $\mathbf{\underline p}, \mathbf{\overline p}$ such that
+  $1 \leq 
+\underline p_1 < \overline p_1 \leq 
+\cdots \leq 
+\underline p_M < \overline p_M \leq N $
+\; \label{line:inputs}
+Initialization: $W_0 \gets -\lambda$, $T_0=\{\}$ \; \label{line:init} 
+Dynamic progamming: \For{$t=1$ to $N$}{ \label{line:for} 
+$T_t\gets \textsc{update}(T_{t-1}, \mathbf y, \mathbf{\underline p}, \mathbf{\overline p})$ // using (\ref{eq:T_t}) \; \label{line:T_update}
+$W_t,\tau^*_t \gets \min, \argmin_{\tau\in T_t} W_\tau + \lambda + L(\tau+1, t, \mathbf x)$\; \label{line:W_update}
+}
+%  \While{While condition}{
+%   instructions\;
+%   \eIf{condition}{
+%   instructions1\;
+%   instructions2\;
+%   }{
+%   instructions3\;
+%   }
+%  }
+\end{algorithm2e}
+
+\paragraph{Example and comparison with classical OPART.} Consider the example with $N=100$ data and $M=3$ labels shown in Figure~\ref{fig:signal-cost}. 
+The classical OPART algorithm ignores the labels, so at $t=100$ it computes the optimal cost by minimizing over all possible last changepoints $\tau\in\{0,\dots, 99\}$, and finds that $\tau^*_{100}=86$ is optimal. 
+This changepoint from the outlier $x_{86}=10.0$ is in a negative $y_3=0$ label so the resulting model is inconsistent with this label.
+It is also inconsistent with the second positive $y_2=1$ label because the model predicts no changepoints between $\underline p_2=45$ and $\overline p_2=55$.
+In constrast the LOPART algorithm computes the optimal cost by minimizing over the constrained set of changepoints $T_{100}=\{45, \dots, 79, 90, \dots, 99\}$ and finds that $\tau^*_{100}=75$ is optimal. 
+The resulting model has changepoints that are consistent with all of the labels.
+
+\paragraph{Computational complexity.}
+Computing each $T_t$ update on line~\ref{line:T_update} is amortized constant $O(1)$ time on average, but linear $O(N)$ time in the worst case (for $t=\overline p_j=N$ when there is a single positive label $j$ spanning the entire data sequence). 
+Computing each minimization on line~\ref{line:W_update} is takes $O(|T_t|)$ time, which is $O(N)$ in the worst case (for $t=N$ when there are no labels). 
+The total number of operations over all iterations of the for loop is $\sum_{t=1}^N |T_t|$ which is $O(N)$ in the best case (labels covering the entire data sequence) and $O(N^2)$ in the worst case (no labels).
+The space complexity of the algorithm is $O(N)$.
+
+\paragraph{Implementation details.} 
+Overall the algorithm can be efficiently implemented in standard C using arrays.
+The set $T_t$ can be implemented using an array of size $N$. 
+Only the most recent set $T_t$ must be stored (previous sets $T_\tau$ for $\tau<t$ can be discarded), and only the first $|T_t|$ elements of the array are used.
+Optimal cost $W$ and last changepoint $\tau^*$ vectors can also be implemented using arrays.
+Optimal segment mean parameters, e.g. $\mu$ in (\ref{eq:L}) from solving $L(\tau+1,t,\mathbf x)$, can be computed and stored during the dynamic programming for loop at no extra computational complexity.
+As in the original optimal partitioning algorithm, the overall optimal changepoints can be computed by examining the values of the $\tau^*$ vector starting with $\tau^*_N$. 
+
+\paragraph{Implementation for infinite penalty.} LOPART defines a path of optimal models. At one extreme with penalty $\lambda=0$ we have changes in all unlabeled regions. The model at the other extreme has a change in each positive label, and no changes elsewhere. 
+% Algorithm~\ref{algo:lopart} works for any finite non-negative penalty $\lambda\in[0,\infty)$ but not for infinite penalty $\lambda=\infty$, when there is at least one positive label.
+% In that case the optimal cost (\ref{eq:labeled_problem_cost}) is infinite because it is infinite for each feasible model. 
+% This is an interesting use case for LOPART because we need to solve for $\lambda=\infty$ if we want to compute the best model with a given number of changes/segments using a sequential search \citep{Hocking2018}, and also for comparison with the SegAnnot algorithm \citep{Hocking2014}.
+This model can be computed when the user inputs infinite penalty $\lambda=\infty$, which can be treated as a special case. First we create a new set of labels, by keeping only the positive labels, and putting negative labels elsewhere. Then we run Algorithm~\ref{algo:lopart} with no penalty $\lambda=0$ to get the optimal changepoints (the optimal cost is infinite). 
+
+% \subsection{Modification to support infinite penalty}
+
+% Algorithm~\ref{algo:lopart} works for any finite non-negative penalty $\lambda\in[0,\infty)$ but not for infinite penalty $\lambda=\infty$, when there is at least one positive label.
+% In that case the optimal cost (\ref{eq:labeled_problem_cost}) is undefined because it is infinite for each feasible model. 
+% This is an interesting use case for LOPART because we need to solve for $\lambda=\infty$ if we want to compute the best model with a given number of changes/segments using a sequential search \citep{Hocking2018}, and also for comparison with the SegAnnot algorithm \citep{Hocking2014}.
+
+% We therefore propose a modification of the optimization problem and algorithm in order to support the infinite penalty.
+% To define the optimization problem we first define the set of all possible changepoints in labels, $\mathcal A=\cup_{j=1}^M \{\underline p_j, \dots, \overline p_j-1\}$. This set of changepoints will not be penalized, because the number of changes in this set equals the number of positive labels, and does not depend on the penalty.
+% Therefore we define a new optimization problem with the same constraints but a different cost, which only penalizes changes in unlabeled regions $\mathcal U = \{1,\dots, N-1\}\setminus \mathcal A$,
+% \begin{align}
+%  \min_{
+%   \mathbf m\in\mathbb R^{N}
+%   } &\ \ 
+%     \label{eq:lopart-cost-inf}
+% \sum_{i=1}^N \ell(m_i, x_i) + \lambda \sum_{i\in \mathcal U} I[m_i \neq m_{i+1} ]
+% \\
+%     \text{subject to} 
+% & \ \ \text{ for all } j\in\{1,\dots,M\},\, 
+% H(\underline p_j, \overline p_j, \mathbf m)=y_j.
+% \nonumber\label{eq:lopart-constraints-inf}
+% \end{align}
+% This problem can be solved using two simple modifications to the dynamic programming update rule. 
+% First we need to handle the case of no changes ($\tau=0$) which we previously handled by initializing $W_0=-\lambda$; instead we can create a special case which only considers the cost of the single segment. 
+% Second we need to use zero penalty (instead of $\lambda$) for the case of a changepoint $\tau$ in a labeled region.
+% The update rule becomes
+% \begin{equation}
+%     \tilde W_t = \min_{\tau \in T_t} \begin{cases}
+%     L(1, t, \mathbf x) & \text{ if } \tau = 0 \\
+%     \tilde W_\tau + \lambda I[\tau\in\mathcal U] + L(\tau+1, t, \mathbf x) & \text{ otherwise.}
+%     \end{cases}
+%     \label{eq:lopart-update-inf}
+% \end{equation}
+% Note that the indicator $I[\tau\in\mathcal U]$ returns 1 if the changepoints $\tau$ is in an unlabeled region, and it returns 0 in a labeled region. 
+% For an infinite penalty $\lambda=\infty$ the cost of the model with no changes $\tau=0$ is always a well-defined finite value $L(1, t, \mathbf x)$. Also the cost of any change $\tau\in\mathcal U$ in an unlabeled region is infinite, which means that the only changes that will be considered by the algorithm are those with finite cost in positive labels.
+
+\paragraph{Previous algorithms which can be used to solve special cases.} In the trivial case of $M=0$ labels, the LOPART optimization problem~(\ref{eq:labeled_problem_cost}) is the same as the classic optimal partitioning problem~(\ref{eq:op}) which can be solved by the OPART algorithm \citep{Jackson2005}.
+Also, when we take an infinite penalty, $\lambda=\infty$, then there are no predicted changes outside of positive labels, and the resulting model can be computed by the SegAnnot algorithm \citep{Hocking2014}.
+
+
+\begin{figure}
+    %\hskip -0.8cm
+  \input{figure-timings-labels}
+    \input{figure-timings}
+    \vskip -0.5cm
+    \caption{Empirical time complexity in simulated data sets (median line and quartile band computed over several data sets of a given size). 
+    \textbf{Left:} with $N=10^5$ data, LOPART takes the same amount of time as OPART for a small number of labels, and the same amount of time as FPOP for a large number of labels.
+    \textbf{Right:} When there are $O(N)$ positive labels LOPART takes $O(N\log N)$ time (same as FPOP). Larger label density ($M/N$) reduces constant factors.
+    }
+    \label{fig:timings}
+\end{figure}
+
+% \begin{figure}
+%     \hskip -1cm
+%     \input{figure-timings}
+%     \vskip -0.5cm
+%     \caption{Empirical time complexity in simulated data sets (median line and quartile band computed over several data sets of a given size). 
+%     \textbf{Left:} with $N=10^5$ data, LOPART takes the same amount of time as OPART for a small number of labels, and the same amount of time as FPOP for a large number of labels.
+%     \textbf{Middle:} with $M=5$ labels, LOPART is asymptotically the same speed as OPART, quadratic $O(N^2)$ time.
+%     \textbf{Right:} with $M=500$ labels, LOPART is asymptotically the same speed as FPOP, log-linear $O(N\log N)$ time.
+%     }
+%     \label{fig:timings}
+% \end{figure}
+
+
+\section{Empirical results}
+
+\subsection{Empirical time complexity in simulated data sets}
+
+As discussed in the previous section, the theoretical/expected time complexity of LOPART is $O(N)$ in the best case (all data labeled) and $O(N^2)$ in the worst case (no data labeled).
+To verify this empirically, we conducted timings experiments with simulated data sequences using the standard normal distribution (no changes in mean, but these simulations are only to evaluate time complexity, so they should be representative of real data as well because our algorithm depends only on the number/type of labels, not the data distribution). 
+The CPU we used was a 2.40GHz Intel(R) Core(TM)2 Duo CPU P8600.
+For baselines we considered the original OPART algorithm which is quadratic $O(N^2)$ time \citep{Jackson2005}, 
+and the log-linear $O(N\log N)$ time FPOP algorithm \citep{Maidstone2016}. 
+Both baselines compute an optimal solution to the changepoint problem~(\ref{eq:op}) with penalty $\lambda$ and no label constraints. 
+
+In the first experiment, we fixed the data set size at $N=10^5$ (using random normal data as explained in the previous paragraph) and used a variable number of positive labels $M\in\{1, \dots, 1000\}$, each of size 9, every 10 data points. As expected, we observed LOPART timings similar to OPART when the number of labels is small, and timings similar to FPOP when the number of labels is large  (Figure~\ref{fig:timings}, left).
+In the second experiment, we fixed the label density $M/N=0.001$ (one positive label per 1000 data points) and varied the number of random normal data $N$. 
+In this case LOPART is log-linear $O(N\log N)$ time (same as FPOP) and for $N\geq 1000$ data it showed substantial speedups over the quadratic $O(N^2)$ time OPART (Figure~\ref{fig:timings}, middle).
+In the third experiment, we fixed the label density $M/N=0.1$ and varied the number of random normal data $N$. 
+As expected with many labels, LOPART is much faster, and in fact faster than FPOP (by constant factors) for $N\geq 1000$ data (Figure~\ref{fig:timings}, right).
+Overall these experiments show that LOPART is at least as fast as OPART, and can be substantially faster when there are many labels.
+
+\subsection{Empirical accuracy with respect to labels in real genomic data}
+\label{sec:accuracy}
+\paragraph{Data sets.} To examine the changepoint prediction accuracy of LOPART, we performed the following experiments in real genomic data. 
+For baseline algorithms we considered OPART \citep{Jackson2005} and SegAnnot \citep{Hocking2014}.
+Genomic scientists created labels for 413 data sequences from cancer DNA copy number profiles using the SegAnnDB system \citep{Hocking2014}.  
+In these data there are separate sequences for each patient and chromosome; abrupt changes in a sequence are important diagnostic markers for aggressive cancer subtypes \citep{gudrun-jclinicaloncology}.
+The number of data points per sequence ranges from $N=39$ to 43628, and the number of labels ranges from $M=2$ to 12 (with at least one positive and one negative label per sequence).
+% > range(some.signals$N)
+% [1]    39 43628
+% > range(some.labels$M)
+% [1]  2 12
+
+\paragraph{Evaluation metrics.} The main evaluation metric that we use is the total number of label errors, which is the sum of false positives and false negatives over all labels $j$ in the train/test sets.
+A false positive is a label $j$ such that $H(\underline p_j, \overline p_j, \mathbf m) > y_j$ (more predicted changes than expected for either a positive or negative label),
+a false negative is $H(\underline p_j, \overline p_j, \mathbf m) = 0 < y_j=1$ (no predicted changes for a positive label), and
+a true positive is $H(\underline p_j, \overline p_j, \mathbf m) \geq y_j=1$ (one or more predicted changes for a positive label).
+We also perform Receiver Operating Characteristic (ROC) analysis, which examines the True Positive Rate as a function of the False Positive Rate (different points on the ROC curve are computed using different penalty $\lambda$ values).
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.37\textwidth]{figure-label-errors.pdf}
+%     \includegraphics[width=0.5\textwidth]{figure-cv.pdf}
+%     \caption{Comparing LOPART with the OPART baseline in terms of label errors in 2-fold cross-validation on real genomic data. 
+%     \textbf{Left:} best case for each algorithm, penalty $\lambda$ selected for each algorithm/sequence/split by minimizing the total label errors, train+test. LOPART is never less accurate than OPART (grey horizontal line indicates equal test label errors, vertical line indicates equal train label errors).
+%     \textbf{Right:} prediction error analysis, using constant penalty that minimizes train errors for OPART. 
+%     }
+%     \label{fig:label-errors-OPART}
+% \end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.37\textwidth]{figure-label-errors.pdf}
+    \includegraphics[width=0.6\textwidth]{figure-label-errors-SegAnnot.pdf}
+    \caption{Comparing LOPART with baselines in terms of best case label errors in 2-fold cross-validation on real genomic data (penalty $\lambda$ selected for each algorithm/sequence/split by minimizing the total label errors, train+test). 
+    \textbf{Left:} LOPART never has more label errors than OPART (grey horizontal line indicates equal test label errors, vertical line indicates equal train label errors).
+    \textbf{Right:} LOPART never has more test errors than SegAnnot (grey diagonal line indicates equal test errors for LOPART and SegAnnot). 
+    }
+    \label{fig:label-errors}
+\end{figure}
+
+
+\paragraph{Cross-validation setup.} For each data sequence we first randomly assigned each label to a fold ID, and used $K=2$ fold cross-validation to obtain two train/test splits per sequence (each train/test set has at least one label per sequence).
+We also tried sequential rather than random assignment (first half of labels on each data sequence are fold 1, second half are fold 2), and we observed qualitatively similar results (same ranking of algorithms), so we report only the results for random assignment below.
+
+\paragraph{Grid of penalty values.} For each data sequence and train/test split we ran LOPART (using only the labels in the train set) and OPART, both with a grid of 21 penalty values evenly spaced on the log scale,  $\lambda\in\{10^{-5}, 10^{-4.5}, \dots, 10^5\}$.
+
+\paragraph{Best penalty analysis.} 
+The goal of this analysis is to determine label error differences between algorithms in the best case for each algorithm (i.e. when the penalty is properly chosen).
+For each split/sequence/algorithm we chose a penalty which minimized the total number of label errors (train+test), and then we analyzed the train/test error differences between algorithms (Figure~\ref{fig:label-errors}).
+
+\paragraph{Best penalty comparison with OPART/FPOP.} 
+Since LOPART has zero train label errors by definition, we expected OPART to have more errors in some cases, even after optimizing over penalty values.
+We observed that the best OPART model had 0 train label errors in $719/826=87\%$ of sequences/splits (counts on vertical grey line in Figure~\ref{fig:label-errors}, left), but 1--2 train label errors in $107/826=13\%$ of sequences/splits (counts right of vertical grey line in Figure~\ref{fig:label-errors}, left).
+% > mytab(total.min.wide, "train_OPART")
+% $errors
+%   train_OPART count   percent
+% 1:           0   719 87.046005
+% 2:           1    91 11.016949
+% 3:           2    16  1.937046
+% $summary
+%         variable value percent
+% 1:     sum.count   826 100.000
+% 2:    zero.count   719  87.046
+% 3: nonzero.count   107  12.954
+% 4:   nonzero.min     1      NA
+% 5:   nonzero.max     2      NA
+% > 
+We also compared the number of test label errors per algorithm, after optimizing over penalty values. 
+We observed that LOPART had the same number of test label errors in $780/826=94\%$ of sequences/splits (counts on horizontal grey line in Figure~\ref{fig:label-errors}, left), and 1--2 fewer test label errors in $46/826=6\%$ of sequences/splits (counts above horizontal grey line in Figure~\ref{fig:label-errors}, left).
+We did not observe any data sets or splits for which LOPART had more train or test label errors than OPART (after optimizing over penalty values).
+% > mytab(total.min.wide, "test.diff")
+% $errors
+%   test.diff count    percent
+% 1:         0   780 94.4309927
+% 2:         1    40  4.8426150
+% 3:         2     6  0.7263923
+% $summary
+%         variable value    percent
+% 1:     sum.count   826 100.000000
+% 2:    zero.count   780  94.430993
+% 3: nonzero.count    46   5.569007
+% 4:   nonzero.min     1         NA
+% 5:   nonzero.max     2         NA
+% > 
+These data indicate that after optimizing over penalty values LOPART is always at least as accurate as OPART in these real data, and LOPART is sometimes more accurate. These conclusions also hold for FPOP, because it computes the same optimal solution as OPART.
+
+
+
+% \begin{figure}
+%     \includegraphics[width=0.49\textwidth]{figure-label-errors-SegAnnot.pdf}    \includegraphics[width=0.49\textwidth]{figure-cv-SegAnnot.pdf}
+%     \caption{Comparing LOPART with the SegAnnot baseline in terms of label errors in 2-fold cross-validation on real genomic data.
+%     \textbf{Left:} best case analysis for LOPART, penalty is chosen by minimizing test label error for each problem. LOPART never has more test errors than SegAnnot (grey diagonal line indicates equal test errors for LOPART and SegAnnot). 
+%     \textbf{Right:} prediction error analysis, using constant penalty that minimizes train errors for OPART. 
+%     }
+%     \label{fig:label-errors-SegAnnot}
+% \end{figure}
+
+
+% \begin{figure}
+% \centering
+%     \includegraphics[width=0.75\textwidth]{figure-cv-roc.pdf}
+%     \caption{Receiver Operating Characteristic (ROC) analysis of predictions using learned constant penalty in 2-fold cross-validation on real genomic data. LOPART has consistently larger area under the curve (auc) than OPART. No ROC curve drawn for SegAnnot because it has no penalty/regularization parameter (it never predicts any changepoints in unlabeled test data).
+%     }
+%     \label{fig:cv-roc}
+% \end{figure}
+
+\paragraph{Best penalty comparison with SegAnnot.} LOPART and SegAnnot both have constraints that ensure zero label errors with respect to the train set, so we compared them by computing the number of label errors with respect to the test set (after optimizing over penalty $\lambda$ values for LOPART; SegAnnot is equivalent to always taking penalty $\lambda=\infty$ in LOPART).
+SegAnnot never predicts any changes in unlabeled regions, so it always has zero false positives and maximal false negatives with respect to the test labels.
+We expected LOPART to have decreased label error rates due to decreased false negative rates (it can predict changepoints in unlabeled regions).
+In $324/826=39\%$ of sequences/splits LOPART and SegAnnot had the same number of test errors (counts on diagonal grey line in Figure~\ref{fig:label-errors}, right).
+In $502/826=61\%$ of sequences/splits LOPART had fewer test errors than SegAnnot (more true positives than false positives, counts below diagonal grey line in Figure~\ref{fig:label-errors}, left).
+We did not observe any sequences/splits for which LOPART had more test label errors than SegAnnot.
+Overall these data indicate that LOPART with best penalty is always as accurate as SegAnnot, and frequently more accurate in these real genomic data sets.
+% > SegAnnot.compare[, table(fp>0, fewer.FN>0)]
+%         FALSE TRUE
+%   FALSE   282  478
+%   TRUE      0   66
+% > SegAnnot.compare[, table(fewer.FN-fp)]
+%   0   1   2   3   4   5 
+% 324 434  43  19   5   1 
+
+\paragraph{Predicted penalty analysis.} 
+The main goal of this analysis is to determine the extent to which a penalty learned using OPART can be used for prediction with LOPART.
+The LOPART algorithm has no train label errors for any penalty $\lambda$, because it uses the train labels in the definition of its optimization problem~(\ref{eq:labeled_problem_cost}).
+To choose the penalty $\lambda$ to use with LOPART, we propose to learn a penalty using OPART (which does not use the train labels in its optimization problem, so it may have train label errors). 
+To do this we first run OPART for several penalty values, then we compute label error rates for each penalty/sequence/split.
+We then use three different methods for learning/predicting the penalty $\lambda$ to use for each test data sequence:
+\begin{description}
+\item[BIC.0] uses the classical Bayesian Information Criterion of \citet{Schwarz78}, which means predicting $\lambda_i=\log N_i$ for each data sequence $i$, where $N_i$ is the number of data points to segment (this is unsupervised since it ignores the labels; 0 learned parameters).
+\item[constant.1] uses grid search to choose a penalty value with minimal train label errors, then predicts this constant $\lambda$ for each test data sequence (this is supervised since it uses the labels; 1 learned parameter).
+\item[linear.2] uses the linear penalty function learning algorithm of \citet{HOCKING-penalties}, with a single feature $x_i = \log \log N_i$ for each data sequence $i$. To make a prediction $\log \lambda_i  = f(x_i) = w^T x_i + b$ we first learn the weight $w$ and bias $b$ using convex optimization of a squared hinge loss which approximates the train label error (supervised; 2 learned  parameters). The feature $x_i = \log \log N_i$ was chosen to facilitate comparison with the unsupervised BIC penalty, which corresponds to always using $w=1,b=0$ in this model.
+\end{description}
+We used each predicted penalty value with both OPART and LOPART, then analyzed the test accuracy (Figure~\ref{fig:cv-BIC}) and area under the ROC curve (Figure~\ref{fig:cv-BIC-roc}).
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figure-cv-BIC.pdf}
+    \vskip -0.5cm
+    \caption{Comparing LOPART with baselines in terms of test accuracy using predicted penalties in real genomic data. Using both unsupervised (BIC.0) and supervised (constant.1, linear.2) penalty prediction methods, LOPART is slightly more accurate than OPART, and much more accurate than SegAnnot (in both test sets).
+    }
+    \label{fig:cv-BIC}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figure-cv-BIC-roc.pdf}
+    \vskip -0.5cm
+    \caption{Receiver Operating Characteristic (ROC) analysis of penalty predictions using three methods (panels from left to right) in cross-validation using two folds (panels from top to bottom) in real genomic data. LOPART has consistently larger Area Under the Curve (AUC) than OPART. No ROC curve drawn for SegAnnot because it has no penalty/regularization parameter (never predicts any changepoints in unlabeled test data).
+    }
+    \label{fig:cv-BIC-roc}
+\end{figure}
+
+
+\paragraph{Predicted penalty comparison with OPART/FPOP.} 
+We expected that penalties learned using OPART should result in reasonable predictions using LOPART, because the two algorithms use the penalty in the same way (penalty $\lambda$ added to cost for each changepoint).
+Surprisingly, we observed that LOPART is slightly but consistently more accurate than OPART (Figure~\ref{fig:cv-BIC}), with differences of 0.6--2.1\% across the three penalty prediction methods and two test folds.
+% > pred.point.diff[order(variable, Penalty.Params, test.fold), .(
+% +   variable, test.fold, Penalty.Params, diff)]
+%             variable test.fold Penalty.Params        diff
+%  1: percent.accuracy         1          BIC.0 0.664893617
+%  2: percent.accuracy         2          BIC.0 1.153846154
+%  3: percent.accuracy         1     constant.1 2.127659574
+%  4: percent.accuracy         2     constant.1 1.538461538
+%  5: percent.accuracy         1       linear.2 0.797872340
+%  6: percent.accuracy         2       linear.2 1.153846154
+%  7:              auc         1          BIC.0 0.013947148
+%  8:              auc         2          BIC.0 0.010151282
+%  9:              auc         1     constant.1 0.011129159
+% 10:              auc         2     constant.1 0.009082051
+% 11:              auc         1       linear.2 0.020265868
+% 12:              auc         2       linear.2 0.015320513
+% > 
+The ROC analysis also indicates that LOPART is slightly more accurate than OPART (Figure~\ref{fig:cv-BIC-roc}). Over the two test folds and three penalty prediction methods we observed that LOPART had 0.009--0.02 larger AUC than OPART.
+These data indicate that OPART/FPOP can be used to learn a penalty for predition with LOPART, and that LOPART has slightly more accurate predictions than OPART/FPOP with the learned penalty.
+
+\paragraph{Predicted penalty comparison with SegAnnot.} 
+We expected LOPART with learned penalties to be more accurate than SegAnnot, for the same reasons as in the best penalty comparison (SegAnnot never predicts any changes in unlabeled regions so always has 100\% false negative rate).
+In agreement with this expectation, we observed that LOPART has consistently much larger test accuracy rates than SegAnnot (Figure~\ref{fig:cv-BIC}).
+% > pred.point.diff[
+% +   variable=="percent.accuracy"
+% + ][order(test.fold, Penalty.Params), .(
+% +   test.fold, Penalty.Params, SegAnnot.diff)]
+%   test.fold Penalty.Params SegAnnot.diff
+% 1:         1          BIC.0      13.16489
+% 2:         1     constant.1      15.15957
+% 3:         1       linear.2      19.41489
+% 4:         2          BIC.0      26.92308
+% 5:         2     constant.1      29.23077
+% 6:         2       linear.2      46.53846
+% > 
+Over the two test folds and three penalty prediction methods, we observed improvements of 13--47\% accuracy.
+In the ROC analysis, SegAnnot is a single point at TPR=FPR=0\% (Figure~\ref{fig:cv-BIC-roc}).
+Overall this analysis indicates that LOPART yields consistently more accurate predictions than SegAnnot in real genomic data. 
+
+\section{Discussion and Conclusions}
+
+We proposed a new algorithm, LOPART, for changepoint detection in a partially labeled sequence of $N$ data.
+It combines ideas from Optimal Partitioning \citep{Jackson2005} with SegAnnot \citep{Hocking2014}, which is the only previous changepoint detection algorithm that guarantees consistency with the given labels, but does not predict any changepoints in unlabeled/test regions.
+The novelty of LOPART with respect to SegAnnot is the penalized formulation, in which SegAnnot can be viewed as the special case with infinite penalty; decreasing the penalty results in increasing the number of predicted changepoints in unlabeled/test regions.
+
+Our theoretical result proves that that LOPART dynamic programming update rule computes an optimal solution subject to the label constraints in $O(N)$ time in the best case, and $O(N^2)$ in the worst case.
+Our empirical timings in simulated data showed that LOPART runs faster with more labels, and actually runs in log-linear $O(N\log N)$ time when the number of positive labels is $O(N)$.
+Our empirical accuracy analysis using best penalties in real genomic data showed that LOPART is always at least as accurate as the OPART/FPOP and SegAnnot baselines, and LOPART is often more accurate.
+Finally our predicted penalty analysis demonstrated the feasibility of learning a penalty using OPART/FPOP and then using it for prediction using LOPART.
+Surprisingly, we observed that LOPART is slightly more accurate than OPART/FPOP, and much more accurate than SegAnnot (using either unsupervised penalties or supervised penalties learned with OPART/FPOP).
+These advantages suggest that when a user requires a model that is consistent with the given labels, LOPART should be used rather than SegAnnot.
+FPOP may be preferred for its empirical log-linear $O(N\log N)$ complexity when there are many data $N$ and few labels $M$ (although it may have some train label errors).
+
+For future work, we would like to solve the same problem with label constraints~(\ref{eq:labeled_problem_cost}) using inequality pruning \citep{pelt} or functional pruning \citep{Maidstone2016}, which we expect would be faster (log-linear rather than quadratic, even with few labels). 
+Furthermore, we could use functional pruning to solve more complex problems with different kinds of labels \citep{HOCKING2016-chipseq} and additional constraints on the directions of changes \citep{Hocking2017}.
+
+\paragraph{Reproducible research statement.}
+Our C code that implements LOPART is in a free/open-source R package on GitHub (\url{https://github.com/tdhock/LOPART}).
+We also have created a dedicated GitHub repository with the code and data necessary to reproduce our figures and empirical results (\url{https://github.com/tdhock/LOPART-paper}).
+
+
+\bibliographystyle{abbrvnat}
+\bibliography{refs}
+
+\end{document}

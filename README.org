@@ -13,12 +13,6 @@ Figures for Labeled Optimal PARTitioning paper
 Reproducibility: use "make" with one of the recipes defined in
 [[file:Makefile]].
 
-TODOS
-- add SegAnnot to speed comparison.
-- accuracy/error comparison with combined baseline (use OPART for
-  unlabeled regions, SegAnnot for labeled regions).
-- citations to standard changepoint approaches (cusum, binseg).
-
 ** Presentation slides
 
 [[file:slides.tex]] makes [[file:slides.pdf]]
@@ -28,6 +22,8 @@ TODOS
   version of the demo slide figures, where you can select any t,tau
   and other penalty values:
   [[http://members.cbio.mines-paristech.fr/~thocking/figure-candidates-interactive/]]
+- [[file:figure-baselines.R]] makes figures that show why previous
+  baselines are not good enough.
 
 ** Additional analyses
 

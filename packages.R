@@ -61,8 +61,9 @@ options(repos=c(
   "http://cloud.r-project.org"))
 library(LOPART)
 works_with_R(
-  "4.0.0",
-  data.table="1.12.8",
+  "4.0.2",
+  neuroblastoma="1.0",
+  data.table="1.13.0",
   penaltyLearning="2020.5.13",
   tikzDevice="0.12.3",
   ggplot2="3.3.1",
