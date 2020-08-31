@@ -1,4 +1,4 @@
-Figures for Labeled Optimal PARTitioning paper 
+Figures for Labeled Optimal PARTitioning paper, [[https://arxiv.org/abs/2006.13967][arXiv:2006.13967]].
 
 - Figure 1: example data and cost computation. [[file:figure-signal-cost.R][R script]], [[file:figure-signal-cost-standAlone.pdf][standAlone
   pdf]], [[file:figure-signal-cost.tex][tex for inclusion in paper]].

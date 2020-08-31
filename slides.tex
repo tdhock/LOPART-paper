@@ -40,7 +40,9 @@
 \author{
   Toby Dylan Hocking\\
   toby.hocking@nau.edu\\
-  joint work with Anuraag Srivastava}
+  joint work with Anuraag Srivastava\\
+  arXiv:2006.13967
+}
 
 %c\date{6 June 2020}
 
@@ -159,6 +161,15 @@ Cancer cell with many copy number alterations.
 
 \input{figure-candidates}
 
+\begin{frame}
+  \frametitle{Interactive version}
+  Try this at home:
+
+  \includegraphics[width=\textwidth]{screenshot-LOPART-interactive}
+
+  \url{http://members.cbio.mines-paristech.fr/~thocking/figure-candidates-interactive/}
+\end{frame}
+
 \section{Results and Discussion}
 
 \begin{frame}
@@ -197,6 +208,8 @@ Cancer cell with many copy number alterations.
   \item Proposed algo fixes issues with two previous algorithms (better
   train AND test accuracy).
 \item Results demonstrate improved speed and accuracy.
+\item R package on CRAN and \url{https://github.com/tdhock/LOPART}
+  \item Figure/slide code on \url{https://github.com/tdhock/LOPART-paper}
 \item Future work: functional pruning algorithm, which can solve more
   complex constrained changepoint problems (e.g. change must be
   non-decreasing), and should be faster (log-linear instead of

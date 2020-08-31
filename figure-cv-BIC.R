@@ -98,6 +98,11 @@ algo.colors <- c(
   SegAnnot="#22CC22",
   OPART="#0077CC",
   LOPART="black")
+algo.colors <- c(
+  OPART="deepskyblue",
+  LOPART="black",
+  SegAnnot="blue",
+  FPOP="red")
 gg <- ggplot()+
   theme_bw()+
   scale_color_manual(values=algo.colors)+
