@@ -29,8 +29,6 @@ err.dt[, max.log.lambda := c(
   model.name, test.fold, set, sequenceID)]
 err.test <- err.dt[set=="test"]
 
-err.train <- err.dt[set=="train" & model.name=="OPART"]
-
 feature.dt <- data.table::fread(
   "data-for-LOPART-signals.csv.gz"
 )[, .(
@@ -41,6 +39,7 @@ feature.mat <- feature.dt[, matrix(
   ncol=1,
   dimnames=list(sequenceID=sequenceID, feature="log.log.data"))]
 
+err.train <- err.dt[set=="train" & model.name %in% c("OPART", "BinSeg")]
 pred.dt <- err.train[, {
   best.penalty <- .SD[, .(
     train.errors=sum(errors)
@@ -70,11 +69,13 @@ pred.dt <- err.train[, {
       Penalty="linear",
       Parameters=2,
       pred.log.lambda=as.numeric(fit$predict(feature.mat))))
-}, by=test.fold]
+}, by=.(model.name, test.fold)]
 
 auc.dt <- err.test[, {
-  select.dt <- data.table(test.fold)
-  pred.fold <- pred.dt[select.dt, on="test.fold"]
+  select.dt <- data.table(
+    test.fold,
+    model.name=if(model.name=="BinSeg")"BinSeg" else "OPART")
+  pred.fold <- pred.dt[select.dt, on=names(select.dt)]
   model.dt <- .SD[order(sequenceID, min.log.lambda)]
   pred.fold[, {
     roc.list <- penaltyLearning::ROChange(
