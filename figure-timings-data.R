@@ -29,14 +29,22 @@ for(size.i in seq_along(size.vec)){
     LOPART={
       LOPART::LOPART(some.signal, labels, 5)
     },
-    BinSegAll={
+    BinSeg={
       binsegRcpp::binseg_normal(some.signal)
     },
-    BinSeg={
-      binsegRcpp::binseg_normal(
-        some.signal,
-        max.segments=nrow(Lfit[["segments"]]))
-    },
+    ## BinSegSome={
+    ##   binsegRcpp::binseg_normal(
+    ##     some.signal,
+    ##     max.segments=nrow(Lfit[["segments"]]))
+    ## },
+    ## multiBinSeg={
+    ##   fpop::multiBinSeg(some.signal, length(some.signal)-1)
+    ## },
+    ## multiBinSegSome={
+    ##   fpop::multiBinSeg(
+    ##     some.signal,
+    ##     nrow(Lfit[["segments"]])-1)
+    ## },
     FPOP={
       fpop::Fpop(some.signal, 5)
     },
@@ -72,14 +80,22 @@ for(size.i in seq_along(size.vec)){
         SegAnnot::SegAnnot(
           some.data, as.integer(some.labels$start), as.integer(some.labels$end))
       ),
-      BinSegAll=substitute(
+      BinSeg=substitute(
         binsegRcpp::binseg_normal(some.data)
       ),
-      BinSeg=substitute(
-        binsegRcpp::binseg_normal(
-          some.data,
-          max.segments=nrow(Lfit[["segments"]]))
-      ),
+      ## BinSegSome=substitute(
+      ##   binsegRcpp::binseg_normal(
+      ##     some.data,
+      ##     max.segments=nrow(Lfit[["segments"]]))
+      ## ),
+      ## multiBinSeg=substitute(
+      ##   fpop::multiBinSeg(some.data, length(some.data)-1)
+      ## ),
+      ## multiBinSegSome=substitute(
+      ##   fpop::multiBinSeg(
+      ##     some.data,
+      ##     nrow(Lfit[["segments"]])-1)
+      ## ),
       FPOP=substitute(fpop::Fpop(some.data, 5)),
       times=3)
     if(n.data <= 40000){

@@ -15,6 +15,8 @@ Reproducibility: use "make" with one of the recipes defined in
 
 ** Presentation slides
 
+[[https://www.youtube.com/watch?v=lm_6_33zOWc][Video screencast]] for NAU ML group meeting, 31 Aug 2020.
+
 [[file:slides.tex]] makes [[file:slides.pdf]]
 
 - [[file:figure-candidates.R]] demo slides.

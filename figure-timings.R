@@ -21,7 +21,9 @@ algo.colors <- c(
   LOPART="black",
   SegAnnot="blue",
   BinSeg="#FDBF6F",
-  BinSegAll="#FF7F00",#orange
+  BinSegSome="#FF7F00",#orange
+  multiBinSeg="#FDBF6F",
+  multiBinSegSome="#FF7F00",#orange
   FPOP="red")
 gg <- ggplot()+
   ggtitle(
