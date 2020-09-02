@@ -9,9 +9,19 @@ timing.stats <- timings.dt[, .(
 ), by=.(Algorithm=expr, size)]
 ref.dt <- data.table(seconds=1, label="1 second")
 algo.colors <- c(
+  "#A6CEE3", #lite blu
+  "#1F78B4", #dark blu
+  "#B2DF8A", # green
+  "#33A02C",
+  "#FB9A99", #red
+  "#E31A1C"
+)
+algo.colors <- c(
   OPART="deepskyblue",
   LOPART="black",
   SegAnnot="blue",
+  BinSeg="#FDBF6F",
+  BinSegAll="#FF7F00",#orange
   FPOP="red")
 gg <- ggplot()+
   ggtitle(

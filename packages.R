@@ -59,7 +59,6 @@ if(!requireNamespace("SegAnnot")){
 
 options(repos=c(
   "http://cloud.r-project.org"))
-library(LOPART)
 works_with_R(
   "4.0.2",
   neuroblastoma="1.0",
@@ -72,8 +71,9 @@ works_with_R(
   fpop="2019.8.26",
   bit64="0.9.7",
   R.utils="2.9.2",
-  ##"tdhock/LOPART@6758a716f3ddf3c061e4a9f91affa62c53771e86",
+  "tdhock/LOPART@0fa34bd9bef61303c997873265337c067b27f2c9",
   ##directlabels="2020.1.31"
+  "tdhock/binsegRcpp@ffa8a487a6a543cae8dc4fc6b263d72a1b8ed3d0",
   "tdhock/directlabels@f690edf6db2790960aa00ca388b7e11da74bf783")
 options(
   tikzDocumentDeclaration="\\documentclass[12pt]{article}",

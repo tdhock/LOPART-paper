@@ -1,11 +1,19 @@
 source("packages.R")
 
+common.names <- c(
+  "test.fold", "penalty", "set", "sequenceID", "count", "cache.csv", 
+  "model.name", "penalty", "possible.fp", "fp", "possible.fn", 
+  "fn", "labels", "errors")
 err.dt <- data.table(
-  csv=Sys.glob("figure-label-errors-data/*.csv")
-)[, data.table::fread(
-  csv,
-  colClasses=list(character=5)
-), by=csv]
+  csv=Sys.glob("figure-label-errors-data*/*.csv")
+)[, {
+  name.vec <- names(data.table::fread(csv, nrow=0))
+  seq.i <- which(name.vec=="sequenceID")
+  data.table::fread(
+    csv,
+    colClasses=list(character=seq.i)
+  )[, common.names, with=FALSE]
+}, by=csv]
 err.dt[model.name=="LOPART" & set=="train", table(errors)]
 err.dt[model.name=="LOPART" & set=="train" & 0<errors, .(
   csv, test.fold, set, penalty, fp, fn)]
@@ -99,14 +107,16 @@ algo.colors <- c(
   OPART="#0077CC",
   LOPART="black")
 algo.colors <- c(
+  SegAnnot="blue",
+  BinSeg="orange",
   OPART="deepskyblue",
   LOPART="black",
-  SegAnnot="blue",
   FPOP="red")
 gg <- ggplot()+
   theme_bw()+
   scale_color_manual(values=algo.colors)+
   scale_size_manual(values=c(
+    BinSeg=1.25,
     LOPART=1.5,
     OPART=1))+
   directlabels::geom_dl(aes(
@@ -127,6 +137,7 @@ gg <- ggplot()+
     color=model.name,
     size=model.name,
     group=paste(model.name, test.fold)),
+    alpha=0.7,
     data=roc.dt)+
   geom_point(aes(
     FPR, TPR,

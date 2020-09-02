@@ -7,13 +7,22 @@ algo.colors <- c(
 algo.colors <- c(
   OPART="deepskyblue",
   LOPART="black",
+  BinSeg="orange",
   SegAnnot="blue")
+common.names <- c(
+  "test.fold", "penalty", "set", "sequenceID", "count", "cache.csv", 
+  "model.name", "penalty", "possible.fp", "fp", "possible.fn", 
+  "fn", "labels", "errors")
 err.dt <- data.table(
-  csv=Sys.glob("figure-label-errors-data/*.csv")
-)[, data.table::fread(
-  csv,
-  colClasses=list(character=5)
-), by=csv]
+  csv=Sys.glob("figure-label-errors-data*/*.csv")
+)[, {
+  name.vec <- names(data.table::fread(csv, nrow=0))
+  seq.i <- which(name.vec=="sequenceID")
+  data.table::fread(
+    csv,
+    colClasses=list(character=seq.i)
+  )[, common.names, with=FALSE]
+}, by=csv]
 err.dt[model.name=="LOPART" & set=="train", table(errors)]
 err.dt[model.name=="LOPART" & set=="train" & 0<errors, .(
   csv, test.fold, set, penalty, fp, fn)]
@@ -118,12 +127,40 @@ mytab <- function(dt, col.name){
 }
 mytab(total.min.wide, "train_OPART")
 
-total.min.wide[, test.diff := test_OPART-test_LOPART]
-mytab(total.min.wide, "test.diff")
+total.min.wide[, test.diff_BinSeg := test_BinSeg-test_LOPART]
+train.test.BinSeg <- total.min.wide[, .(
+  splits=.N
+), by=.(train_BinSeg, test.diff_BinSeg)]
+gg <- ggplot()+
+  ggtitle("Best case comparison
+with BinSeg")+
+  geom_hline(yintercept=0, color="grey")+
+  geom_vline(xintercept=0, color="grey")+
+  geom_tile(aes(
+    train_BinSeg, test.diff_BinSeg, fill=log10(splits)),
+    alpha=0.8,
+    data=train.test.BinSeg)+
+  geom_text(aes(
+    train_BinSeg, test.diff_BinSeg, label=splits),
+    data=train.test.BinSeg)+
+  scale.for("BinSeg")+
+  coord_equal()+
+  theme_bw()+
+  scale_x_continuous(
+    "BinSeg train label errors
+(LOPART is always=0)")+
+  scale_y_continuous(
+    "Test label error difference
+(BinSeg-LOPART)")
+pdf("figure-label-errors-BinSeg.pdf", width=3, height=2.3)
+print(gg)
+dev.off()
 
+total.min.wide[, test.diff_OPART := test_OPART-test_LOPART]
+mytab(total.min.wide, "test.diff_OPART")
 train.test.counts <- total.min.wide[, .(
   splits=.N
-), by=.(train_OPART, test.diff)]
+), by=.(train_OPART, test.diff_OPART)]
 gg <- ggplot()+
   ##ggtitle("LOPART is more accurate\nthan OPART")+
   ##my.title+
@@ -132,11 +169,11 @@ with OPART")+
   geom_hline(yintercept=0, color="grey")+
   geom_vline(xintercept=0, color="grey")+
   geom_tile(aes(
-    train_OPART, test.diff, fill=log10(splits)),
+    train_OPART, test.diff_OPART, fill=log10(splits)),
     alpha=0.8,
     data=train.test.counts)+
   geom_text(aes(
-    train_OPART, test.diff, label=splits),
+    train_OPART, test.diff_OPART, label=splits),
     data=train.test.counts)+
   ##scale.fill+
   scale.for("OPART")+

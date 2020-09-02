@@ -8,6 +8,7 @@ Rplots.pdf
 auto
 *.log
 figure-label-errors-data
+figure-label-errors-data-binseg
 figure-sequence-cv-data
 *~
 library

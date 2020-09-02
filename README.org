@@ -5,7 +5,7 @@ Figures for Labeled Optimal PARTitioning paper, [[https://arxiv.org/abs/2006.139
 - Figure 2: timings. [[file:figure-timings.R][R script]], tex for inclusion in paper: [[file:figure-timings-labels.tex][time vs
   number of labels (left)]], [[file:figure-timings.tex][time vs number of data (right)]].
 - Figure 3: Best case label error. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf (left)]],
-  [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf (right)]].
+  [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf (right)]], [[file:figure-label-errors-BinSeg.pdf][BinSeg pdf]].
 - Comparison with BIC figures. [[file:figure-cv-BIC.R][R script]]:
   - Figure 4: [[file:figure-cv-BIC.pdf][Error rates]].
   - Figure 5: [[file:figure-cv-BIC-roc.pdf][ROC curves]].
