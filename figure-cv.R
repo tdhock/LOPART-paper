@@ -215,7 +215,7 @@ gg <- ggplot()+
   scale_fill_gradient(
     "log10(seqs)",
     low="white",
-    high="orange")+
+    high="#ECAE5E")+
   theme_bw()+ 
   geom_text(aes(
     diff, factor(test.fold),

@@ -20,7 +20,7 @@ algo.colors <- c(
   OPART="deepskyblue",
   LOPART="black",
   SegAnnot="blue",
-  BinSeg="#FDBF6F",
+  BinSeg="#ECAE5E",#dark orange
   BinSegSome="#FF7F00",#orange
   multiBinSeg="#FDBF6F",
   multiBinSegSome="#FF7F00",#orange
@@ -46,6 +46,7 @@ gg <- ggplot()+
   scale_color_manual(values=algo.colors)+
   geom_line(aes(
     size, median, color=Algorithm),
+    size=2,
     data=timing.stats)+
   scale_x_log10(
     "Number of labels $M$",
@@ -94,6 +95,7 @@ with $O(N)$ positive labels")+
   scale_color_manual(values=algo.colors)+
   geom_line(aes(
     size, median, color=Algorithm),
+    size=2,
     data=timing.stats)+
   directlabels::geom_dl(aes(
     size, median, label=Algorithm, color=Algorithm),

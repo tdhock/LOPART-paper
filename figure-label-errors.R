@@ -7,7 +7,7 @@ algo.colors <- c(
 algo.colors <- c(
   OPART="deepskyblue",
   LOPART="black",
-  BinSeg="orange",
+  BinSeg="#ECAE5E",
   SegAnnot="blue")
 common.names <- c(
   "test.fold", "penalty", "set", "sequenceID", "count", "cache.csv", 
@@ -112,13 +112,19 @@ mytab <- function(dt, col.name){
     percent=100*.N/nrow(dt)
   ), by=col.name]
   is.zero <- errors[[col.name]] == 0
-  nonzero <- errors[!is.zero]
+  is.pos <- errors[[col.name]] > 0
+  is.neg <- errors[[col.name]] < 0
+  pos <- errors[is.pos]
+  neg <- errors[is.neg]
   sum.wide <- data.table(
     sum.count=sum(errors$count),
     zero.count=errors$count[is.zero],
-    nonzero.count=sum(nonzero$count),
-    nonzero.min=min(nonzero[[col.name]]),
-    nonzero.max=max(nonzero[[col.name]]))
+    pos.count=sum(pos[["count"]]),
+    pos.min=min(pos[[col.name]]),
+    pos.max=max(pos[[col.name]]),
+    neg.count=sum(neg[["count"]]),
+    neg.min=min(neg[[col.name]]),
+    neg.max=max(neg[[col.name]]))
   sum.tall <- melt(sum.wide, measure.vars=names(sum.wide))
   sum.tall[grepl("count", variable), percent := 100*value/nrow(dt) ]
   list(
@@ -128,6 +134,8 @@ mytab <- function(dt, col.name){
 mytab(total.min.wide, "train_OPART")
 
 total.min.wide[, test.diff_BinSeg := test_BinSeg-test_LOPART]
+mytab(total.min.wide, "test.diff_BinSeg")
+mytab(total.min.wide, "train_BinSeg")
 train.test.BinSeg <- total.min.wide[, .(
   splits=.N
 ), by=.(train_BinSeg, test.diff_BinSeg)]

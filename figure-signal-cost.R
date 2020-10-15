@@ -83,7 +83,7 @@ sig.color <- "grey50"
 min.dt <- cost.dt[, .SD[which.min(cost_candidates)], by=Algorithm]
 min.dt[, hjust := ifelse(Algorithm=="OPART", 0, 1)]
 min.dt[, y := cost.dt[is.finite(cost_candidates), mean(range(cost_candidates))] ]
-gg <- ggplot()+
+gg.data <- ggplot()+
   geom_text(aes(
     position, signal, hjust=hjust,
     label=sprintf("$x_{%d}$", i)),
@@ -98,33 +98,11 @@ gg <- ggplot()+
   scale_fill_manual("label", values=label.colors)+
   theme_bw()+
   theme(panel.spacing=grid::unit(0, "lines"))+
-  facet_grid(y.var ~ ., scales="free")+
-  geom_vline(aes(
-    xintercept=change,
-    size=Algorithm,
-    color=Algorithm),
-    data=change.dt)+
-  geom_segment(aes(
-    start-0.5, mean,
-    size=Algorithm,
-    color=Algorithm,
-    xend=end+0.5, yend=mean),
-    data=DATA(seg.dt))+
   geom_point(aes(
     position, signal),
     color=sig.color,
     shape=1,
     data=DATA(signal.dt))+
-  scale_size_manual(values=c(
-    OPART=1,
-    LOPART=0.5))+
-  scale_color_manual(values=c(
-    OPART="deepskyblue",
-    LOPART="black"))+
-  ylab("")+
-  scale_x_continuous(
-    "position",
-    breaks=seq(0, 100, by=10))+
   geom_text(aes(
     start, y,
     label=sprintf("$\\underline p_{%d}=%d$", seq_along(start), start)),
@@ -138,7 +116,34 @@ gg <- ggplot()+
     end, y,
     label=sprintf("$\\overline p_{%d}=%d$", seq_along(start), end)),
     hjust=0,
-    data=DATA(labels.dt))+
+    data=DATA(labels.dt))
+tikz("figure-signal.tex", width=4.5, height=2.2)
+print(gg.data+theme(legend.position="none")+xlim(0, 105))
+dev.off()
+  
+gg.model <- gg.data+
+  facet_grid(y.var ~ ., scales="free")+
+  geom_vline(aes(
+    xintercept=change,
+    size=Algorithm,
+    color=Algorithm),
+    data=change.dt)+
+  geom_segment(aes(
+    start-0.5, mean,
+    size=Algorithm,
+    color=Algorithm,
+    xend=end+0.5, yend=mean),
+    data=DATA(seg.dt))+
+  scale_size_manual(values=c(
+    OPART=1,
+    LOPART=0.5))+
+  scale_color_manual(values=c(
+    OPART="deepskyblue",
+    LOPART="black"))+
+  ylab("")+
+  scale_x_continuous(
+    "position",
+    breaks=seq(0, 100, by=10))+
   geom_text(aes(
     pos, cost_candidates,
     hjust=hjust,
@@ -159,10 +164,10 @@ gg <- ggplot()+
 w=6
 h=2.4
 tikz("figure-signal-cost-standAlone.tex", width=w, height=h, standAlone=TRUE)
-print(gg)
+print(gg.model)
 dev.off()
 system("pdflatex figure-signal-cost-standAlone")
 tikz("figure-signal-cost.tex", width=w, height=h)
-print(gg)
+print(gg.model)
 dev.off()
 

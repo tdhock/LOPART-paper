@@ -109,7 +109,7 @@ algo.colors <- c(
   LOPART="black")
 algo.colors <- c(
   SegAnnot="blue",
-  BinSeg="orange",
+  BinSeg="#ECAE5E",
   OPART="deepskyblue",
   LOPART="black",
   FPOP="red")
@@ -187,9 +187,19 @@ pred.point.diff <- dcast(
   pred.point.vars,
   test.fold + Penalty.Params + variable ~ model.name,
   value.var="value")
-pred.point.diff[, diff := LOPART - OPART ]
+pred.point.compare <- melt(
+  pred.point.diff,
+  measure.vars=c("OPART", "BinSeg"),
+  variable.name="baseline")
+pred.point.compare[, improvement := LOPART - value]
+pred.point.compare[, .(
+  min=min(improvement),
+  max=max(improvement)
+), by=.(baseline, variable)]
+pred.point.diff[, OPART.diff := LOPART - OPART ]
+pred.point.diff[, BinSeg.diff := LOPART - BinSeg ]
 pred.point.diff[order(variable, Penalty.Params, test.fold), .(
-  variable, test.fold, Penalty.Params, diff)]
+  variable, test.fold, Penalty.Params, OPART.diff, BinSeg.diff)]
 pred.point.diff[, SegAnnot.diff := LOPART - SegAnnot ]
 pred.point.diff[
   variable=="percent.accuracy"

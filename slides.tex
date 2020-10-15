@@ -33,6 +33,16 @@
   \end{frame}
 }
 
+% from https://tex.stackexchange.com/questions/160825/modifying-margins-for-one-slide
+\newcommand\Wider[2][3cm]{%
+\makebox[\linewidth][c]{%
+  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+  \raggedright#2
+  \end{minipage}%
+  }%
+}
+
+
 \begin{document}
 
 \title{Labeled Optimal Partitioning}
@@ -115,7 +125,24 @@ Cancer cell with many copy number alterations.
 
 \input{figure-baselines}
 
-\section{Labeled Optimal Partitioning (LOPART)}
+\section{New Labeled Optimal Partitioning (LOPART) Algorithm}
+
+\begin{frame}
+  \frametitle{Geometric interpretation of data and labels}
+  Assume $N$ data and $M$ labels defined by
+  \begin{itemize}
+  \item $\mathbf x = [ x_1 \cdots x_N ]$ is the sequence of $N$ data,
+  \item $  1 \leq 
+\underline p_1 < \overline p_1 \leq  
+\cdots \leq 
+\underline p_M < \overline p_M \leq 
+N$ are region start/ends,
+  \item $y_j\in\{0,1\}$ is the number of changes expected in the region.
+  \end{itemize}
+
+  \input{figure-signal}   
+  
+\end{frame}
 
 \begin{frame}
   \frametitle{Baseline/previous OPART algorithm}
@@ -130,11 +157,11 @@ Cancer cell with many copy number alterations.
   Then the problem and algorithm are
   \begin{eqnarray*}
     \label{eq:op}
-    \hat C_N &=& \min_{\mathbf m\in \mathbb R^N}
+     C_N &=& \min_{\mathbf m\in \mathbb R^N}
                  \sum_{i=1}^N \ell(m_i, x_i) + 
                  \lambda \sum_{i=1}^{N-1} I[m_i \neq m_{i+1}].\\
              &=& \min_{\tau\in \{0, 1, \dots, N-1\} }
-                 \hat C_\tau +
+                  C_\tau +
                  \lambda +
                  L(\tau+1, N, \mathbf x).
                  \label{eq:op-update}
@@ -142,27 +169,92 @@ Cancer cell with many copy number alterations.
   where
   \begin{itemize}
   \item $\tau$ is the last changepoint optimization variable,
-  \item $\hat C_\tau$ is the optimal cost computed in previous iteration $\tau$,
+  \item $ C_\tau$ is the optimal cost computed in previous iteration $\tau$,
   \item $L$ is the cost of the last segment.
   \end{itemize}
 
 \end{frame}
 
-\section{LOPART Demo}
+\begin{frame}
+  \frametitle{Proposed LOPART optimization problem}
 
-% from https://tex.stackexchange.com/questions/160825/modifying-margins-for-one-slide
-\newcommand\Wider[2][3cm]{%
-\makebox[\linewidth][c]{%
-  \begin{minipage}{\dimexpr\textwidth+#1\relax}
-  \raggedright#2
-  \end{minipage}%
-  }%
-}
+  Assume $M$ labels are defined by
+  \begin{itemize}
+  \item $  1 \leq 
+\underline p_1 < \overline p_1 \leq 
+\cdots \leq 
+\underline p_M < \overline p_M \leq 
+N$ are region start/ends,
+  \item $y_j\in\{0,1\}$ is the number of changes expected in the region.
+  \end{itemize}
+  The problem we want to solve is
+\begin{align}
+ \min_{
+  \mathbf m\in\mathbb R^{N}
+  } &\ \ 
+  \nonumber
+\sum_{i=1}^{N} 
+    \ell(m_i, x_i) 
+    +\lambda
+ \sum_{i=1}^{N-1}
+    I[m_i \neq m_{i+1}].
+\\
+  \alert{\text{subject to} }
+    &
+      \alert{\ \ \text{ for all } j\in\{1,\dots,M\},\,
+y_j = \sum_{i=\underline p_j}^{\overline p_j-1}
+    I[m_i \neq m_{i+1}].}
+\nonumber
+\end{align}
 
-\input{figure-candidates}
+Objective function in black same as previous/unlabeled problem,\\
+\alert{constraint in red new to proposed/labeled problem}.
+
+\end{frame}
 
 \begin{frame}
-  \frametitle{Interactive version}
+  \frametitle{Proposed LOPART dynamic programming algorithm}
+Define the set of possible last changepoints at time $t$ as
+\begin{equation*}
+    T_t = \begin{cases}
+      \alert{T_{t-1}} & \alert{
+        \text{ if } 
+        \exists j: y_j=0 \text{ and } 
+        t\in \{\underline p_j + 1, \dots, \overline p_j \}
+      }
+      \\
+      \alert{T_{t-1}} & \alert{
+        \text{ if } 
+        \exists j: y_j=1 \text{ and } 
+        t\in \{\underline p_j + 1, \dots, \overline p_j - 1\}
+      }
+      \\
+      \alert{\{\underline p_j, \dots, t-1\}} & \alert{
+        \text{ if } 
+        \exists j: y_j=1 \text{ and } 
+        t= \overline p_j
+      }
+      \\
+    T_{t-1}\cup \{t-1\} & \text{ otherwise. (unlabeled region)} 
+    \end{cases}
+  \end{equation*}
+Update rule in black same as previous/unlabeled problem,\\
+\alert{rules in red for labeled regions new to proposed problem}.
+  
+Then the optimal cost can be computed via
+\begin{equation*}
+  \tau^*_t,\,  W_t = \argmin,\, \min_{\tau \in \alert{T_t}}  W_\tau + \lambda + L(\tau+1, t, \mathbf x).
+  \end{equation*}
+(see paper for proof)
+
+\end{frame}
+
+\section{Demonstration of LOPART on example labeled data}
+
+\input{figure-candidates}
+ 
+\begin{frame}
+  \frametitle{Interactive version, new algorithm requires less computation}
   Try this at home:
 
   \includegraphics[width=\textwidth]{screenshot-LOPART-interactive}
@@ -175,30 +267,61 @@ Cancer cell with many copy number alterations.
 \begin{frame}
   \frametitle{Empirical time complexity (labels)}
   \input{figure-timings-labels}
+
+  Random normal data simulations.
 \end{frame}
 
 \begin{frame}
   \frametitle{Empirical time complexity (data)}
   \input{figure-timings}
+
+  Random normal data simulations.
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{figure-label-errors-SegAnnot}
+
+  Real genomic data labeled by biologists (Hocking
+  \emph{et al.}, 2014).
+  \begin{itemize}
+  \item 413 sequences, $K=2$ fold cross-validation over labels.
+  \item Data per sequence $N=39$ to 43628.
+  \item Labels per sequence $M=2$ to 12.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
   \includegraphics[width=\textwidth]{figure-label-errors}
 \end{frame}
-
+ 
 \begin{frame}
-  \includegraphics[width=\textwidth]{figure-label-errors-SegAnnot}
+  \includegraphics[width=\textwidth]{figure-label-errors-BinSeg}
 \end{frame}
 
 \begin{frame}
   \frametitle{Test accuracy in cross-validation experiments}
   \includegraphics[width=\textwidth]{figure-cv-BIC}
+
+  Penalty $\lambda$ predicted on test set using either unsupervised or
+  supervised (constant/linear) methods:
+
+\begin{description}
+\item[linear.2] linear $\log \lambda_i = b + w \log\log N_i$ (Hocking
+  2013), convex optimization of $w,b$ (supervised, 2 learned
+  parameters).
+\item[constant.1] grid search, constant $\lambda$ (supervised, 1
+  learned parameter).
+\item[BIC.0] classical Bayesian Information Criterion (Schwarz 1978),
+  $\lambda_i=\log N_i$ (unsupervised, 0 learned parameters).
+\end{description}
   
 \end{frame}
 
 \begin{frame}
   \frametitle{Test ROC curves in cross-validation experiments}
   \includegraphics[width=\textwidth]{figure-cv-BIC-roc}
+
+  Dot = FPR/TPR at predicted threshold.
   
 \end{frame}
 

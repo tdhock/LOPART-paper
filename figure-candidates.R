@@ -227,8 +227,8 @@ for(up.to.t in unique(up.to.dt$t)){
   \\frametitle{Demonstration of LOPART with penalty $\\lambda=%.0f$}
   \\Wider{\\input{%s}}
 $$
-W_t =
-\\min_{
+\\tau^*_t,\\, W_t =
+\\argmin,\\, \\min_{
   \\tau \\in T_t
 }
 \\underbrace{

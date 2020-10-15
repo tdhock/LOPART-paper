@@ -162,7 +162,7 @@ The main new idea of our model is to add constraints to original optimal partiti
 To determine whether or not the predicted changepoints are consistent with the given labels, we need to count the number of predicted changes in each labeled region $[\underline p_j, \overline p_j]$. To do that we define 
 $$
 H(\underline p, \overline p, \mathbf m) =
-    \sum_{i=\underline p}^{\overline p-1}
+\sum_{i=\underline p}^{\overline p-1}
     I[m_i \neq m_{i+1}],
 $$
 which counts the number of changepoints in the mean vector $\mathbf m$.
