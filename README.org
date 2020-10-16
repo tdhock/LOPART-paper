@@ -40,8 +40,8 @@ Reproducibility: use "make" with one of the recipes defined in
 The data described in the paper are downloadable here:
 - Data were created using SegAnnDB software, in which expert
   biologists looked at scatterplots and created labels based on visual
-  interpretation of significant signal/noise
-  patterns. [[http://members.cbio.mines-paristech.fr/~thocking/neuroblastoma/signal.list.annotation.sets.RData][Source data file]], [[https://github.com/tdhock/LabeledFPOP-paper/blob/master/signal.list.annotation.sets.R][R Script to process]].
+  interpretation of significant signal/noise patterns. [[http://members.cbio.mines-paristech.fr/~thocking/neuroblastoma/signal.list.annotation.sets.RData][Source data
+  file]], [[https://github.com/tdhock/LabeledFPOP-paper/blob/master/signal.list.annotation.sets.R][R Script to process]], [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029035/][SegAnnDB paper]].
 - Each CSV file has a sequenceID column which is of the form A.B where
   A is the profile ID number and B is the chromosome name. This ID can
   be used to separate the data into different segmentation/changepoint
