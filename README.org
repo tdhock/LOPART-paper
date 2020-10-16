@@ -37,7 +37,7 @@ Reproducibility: use "make" with one of the recipes defined in
 
 ** Benchmark data set
 
-The data described in the paper are downloadable here:
+The 413 real genomic data sequences described in the paper are downloadable here:
 - Each CSV file has a sequenceID column which is of the form A.B where
   A is the profile ID number and B is the chromosome name. This ID can
   be used to separate the data into different segmentation/changepoint
