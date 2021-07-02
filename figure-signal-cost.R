@@ -172,3 +172,5 @@ tikz("figure-signal-cost.tex", width=w, height=h)
 print(gg.model)
 dev.off()
 
+
+
