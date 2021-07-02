@@ -35,3 +35,37 @@ Reproducibility: use "make" with one of the recipes defined in
   second half labels) figures. [[file:figure-sequence-cv.R][R script]], [[file:figure-sequence-cv-OPART.pdf][Best case OPART differences]],
   [[file:figure-sequence-cv-SegAnnot.pdf][Best case SegAnnot differences]], [[file:figure-sequence-cv-roc.pdf][ROC curves]], [[file:figure-sequence-cv.pdf][Test error rates]].
 
+** Benchmark data set
+
+The 413 real genomic data sequences described in the paper are downloadable here:
+- Each CSV file has a sequenceID column which is of the form A.B where
+  A is the profile ID number and B is the chromosome name. This ID can
+  be used to separate the data into different segmentation/changepoint
+  detection problems.
+- [[https://github.com/tdhock/LOPART-paper/raw/master/data-for-LOPART-signals.csv.gz][signals]], from 39 to 43628 observations per data sequence.
+  - data.i column ranges from 1 to the number of data on that
+    sequenceID. (data.i=1 is the first data point in the sequence,
+    data.i=2 is the second, etc)
+  - logratio column is the raw/noisy data which should be used as
+    input to the segmentation/changepoint detection algorithm.
+- [[https://github.com/tdhock/LOPART-paper/raw/master/data-for-LOPART-labels.csv.gz][labels]], from 2 to 12 per data sequence.
+  - changes column is either 0 or 1 (the number of changepoints which
+    should be predicted in this region label). 
+    - False positive label is when predicted number of changepoints is
+      greater than labeled number of changepoints (e.g., 2 changes
+      predicted in either a 0 or 1 label).
+    - False negative label is when changes=1 and predicted number of
+      changepoints is 0.
+  - fold column is either 1 or 2 (fold IDs used in
+    cross-validation in the paper).
+  - start/end columns define a region of the correponding data
+    sequence (in terms of data.i index values) in which the labeled
+    number of changes should be detected.
+- Note on data source: they were created using SegAnnDB software, in
+  which expert biologists looked at scatterplots and created labels
+  based on visual interpretation of significant signal/noise
+  patterns. [[http://members.cbio.mines-paristech.fr/~thocking/neuroblastoma/signal.list.annotation.sets.RData][Source data file]], [[https://github.com/tdhock/LabeledFPOP-paper/blob/master/signal.list.annotation.sets.R][R Script to process]], [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029035/][SegAnnDB paper]].
+  
+I recommend computing the label error using [[https://github.com/tdhock/penaltyLearning][penaltyLearning]] R package,
+[[https://github.com/tdhock/change-tutorial][useR
+2017 tutorial materials]].
