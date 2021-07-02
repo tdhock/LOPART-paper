@@ -144,7 +144,7 @@ gg.model <- gg.data+
   scale_x_continuous(
     "Position in data sequence",
     limits=c(0, 105),
-    breaks=c(1, seq(10, 100, by=10)))+
+    breaks=seq(0, 100, by=10))+#start at 0 for cost.
   geom_text(aes(
     pos, cost_candidates,
     hjust=hjust,
