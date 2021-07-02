@@ -142,8 +142,9 @@ gg.model <- gg.data+
     LOPART="black"))+
   ylab("")+
   scale_x_continuous(
-    "position",
-    breaks=seq(0, 100, by=10))+
+    "Position in data sequence",
+    limits=c(0, 105),
+    breaks=c(1, seq(10, 100, by=10)))+
   geom_text(aes(
     pos, cost_candidates,
     hjust=hjust,
@@ -161,7 +162,7 @@ gg.model <- gg.data+
     color=Algorithm, shape=Algorithm),
     data=COST(cost.dt))+
   scale_shape_manual(values=c(OPART=1, LOPART=2))
-w=6
+w=6.5
 h=2.4
 tikz("figure-signal-cost-standAlone.tex", width=w, height=h, standAlone=TRUE)
 print(gg.model)

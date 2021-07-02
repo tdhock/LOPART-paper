@@ -3,6 +3,17 @@ library(data.table)
 works_with_R('3.6.0', animint2="2019.7.3", data.table="1.12.8")
 
 viz.data <- readRDS("figure-candidates-interactive-data.rds")
+
+dir.create("figure-candidates-interactive-data")
+for(data.type in names(viz.data)){
+  dt <- viz.data[[data.type]]
+  out.csv <- file.path(
+    "figure-candidates-interactive-data",
+    paste0(data.type, ".csv"))
+  data.table::fwrite(dt, out.csv)
+}
+
+
 viz.data$cost[, last.change := tau]
 best.overall <- viz.data$cost[up.to.t == 100, {
   .SD[which.min(cost_candidates)]

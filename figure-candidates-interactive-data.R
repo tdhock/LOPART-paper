@@ -57,6 +57,7 @@ seg.dt.list <- list()
 cost.dt.list <- list()
 for(penalty in 10^seq(-2, 3)){
   segs.up.to <- list()
+  print(penalty)
   for(tau in unique.tau){
     for(model.name in names(label.list)){
       label.dt <- data.table(label.list[[model.name]])
@@ -109,5 +110,15 @@ viz.data <- list(
   cost=cost.dt,
   labels=labels,
   signal=signal.dt)
+
+dir.create("figure-candidates-interactive-data")
+for(data.type in names(viz.data)){
+  dt <- viz.data[[data.type]]
+  out.csv <- file.path(
+    "figure-candidates-interactive-data",
+    paste0(data.type, ".csv"))
+  data.table::fwrite(dt, out.csv)
+}
+
 saveRDS(viz.data, "figure-candidates-interactive-data.rds")
 
