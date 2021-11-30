@@ -23,7 +23,7 @@ Reproducibility: use "make" with one of the recipes defined in
 - [[file:figure-candidates-interactive.R]] creates a more interactive
   version of the demo slide figures, where you can select any t,tau
   and other penalty values:
-  [[http://members.cbio.mines-paristech.fr/~thocking/figure-candidates-interactive/]]
+  [[http://ml.nau.edu/viz/2021-07-23-LOPART-candidates/]]
 - [[file:figure-baselines.R]] makes figures that show why previous
   baselines are not good enough.
 
@@ -64,7 +64,7 @@ The 413 real genomic data sequences described in the paper are downloadable here
 - Note on data source: they were created using SegAnnDB software, in
   which expert biologists looked at scatterplots and created labels
   based on visual interpretation of significant signal/noise
-  patterns. [[http://members.cbio.mines-paristech.fr/~thocking/neuroblastoma/signal.list.annotation.sets.RData][Source data file]], [[https://github.com/tdhock/LabeledFPOP-paper/blob/master/signal.list.annotation.sets.R][R Script to process]], [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029035/][SegAnnDB paper]].
+  patterns. [[https://rcdata.nau.edu/genomic-ml/public_html/neuroblastoma/signal.list.annotation.sets.RData][Source data file]], [[https://github.com/tdhock/LabeledFPOP-paper/blob/master/signal.list.annotation.sets.R][R Script to process]], [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4029035/][SegAnnDB paper]].
   
 I recommend computing the label error using [[https://github.com/tdhock/penaltyLearning][penaltyLearning]] R package,
 [[https://github.com/tdhock/change-tutorial][useR
