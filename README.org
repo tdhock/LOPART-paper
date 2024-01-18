@@ -7,6 +7,7 @@ Figures for Labeled Optimal PARTitioning paper, [[https://arxiv.org/abs/2006.139
 - Figures 3-4: Best case label error. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf (Fig 3
   left)]], [[file:figure-label-errors-BinSeg.pdf][BinSeg pdf (Fig 3 right)]], [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf (Fig 4)]].
 - Comparison with BIC figures. [[file:figure-cv-BIC.R][R script]]:
+  - First run [[file:figure-label-errors-data.R]] to compute target intervals.
   - Figure 5: [[file:figure-cv-BIC.pdf][Error rates]].
   - Figure 6: [[file:figure-cv-BIC-roc.pdf][ROC curves]].
 
