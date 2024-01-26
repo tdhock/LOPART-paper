@@ -163,6 +163,7 @@ gg <- ggplot()+
     breaks=c(0, 0.5, 1),
     labels=c("0", "0.5", "1"))
 ##print(gg)
+data.table::fwrite(roc.dt, "figure-cv-BIC-roc.csv")
 expansion <- 2
 pdf("figure-cv-BIC-roc.pdf", width=3*expansion, height=2*expansion)
 print(gg)
@@ -242,6 +243,7 @@ gg.comp <- ggplot()+
     LOPART, percent.error, color=Penalty.Params),
     data=pred.point.tall)+
   coord_equal()
+data.table::fwrite(pred.point.dt, "figure-cv-BIC-error-rates.csv")
 gg <- ggplot()+
   theme_bw()+
   theme(

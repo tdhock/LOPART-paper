@@ -63,7 +63,7 @@ works_with_R(
   "4.0.2",
   neuroblastoma="1.0",
   data.table="1.13.0",
-  penaltyLearning="2020.5.13",
+  "tdhock/penaltyLearning@52e62d4e209f90b29066db56b1b03da039f9e92e",
   tikzDevice="0.12.3",
   ggplot2="3.3.1",
   ##ggrepel="0.8.2",
