@@ -60,17 +60,17 @@ if(!requireNamespace("SegAnnot")){
 options(repos=c(
   "http://cloud.r-project.org"))
 works_with_R(
-  "4.0.2",
-  neuroblastoma="1.0",
-  data.table="1.13.0",
+  "4.3.2",
+  neuroblastoma="2023.9.3",
+  data.table="1.14.10",
   "tdhock/penaltyLearning@52e62d4e209f90b29066db56b1b03da039f9e92e",
-  tikzDevice="0.12.3",
-  ggplot2="3.3.1",
+  tikzDevice="0.12.6",
+  ggplot2="3.4.4",
   ##ggrepel="0.8.2",
-  microbenchmark="1.4.7",
+  microbenchmark="1.4.10",
   fpop="2019.8.26",
-  bit64="0.9.7",
-  R.utils="2.9.2",
+  bit64="4.0.5",
+  R.utils="2.12.3",
   "tdhock/LOPART@0fa34bd9bef61303c997873265337c067b27f2c9",
   ##directlabels="2020.1.31"
   "tdhock/binsegRcpp@ffa8a487a6a543cae8dc4fc6b263d72a1b8ed3d0",
