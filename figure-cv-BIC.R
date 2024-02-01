@@ -70,6 +70,23 @@ pred.dt <- err.train[, {
       Parameters=2,
       pred.log.lambda=as.numeric(fit$predict(feature.mat))))
 }, by=.(model.name, test.fold)]
+table(pred.dt$model.name)
+table(err.test$model.name)
+pred.with.err.dt <- pred.dt[, .(
+  sequenceID, test.fold, train.model=model.name,
+  Penalty, Parameters, pred.log.lambda
+)][
+  err.test[, .(
+    sequenceID, test.fold, train.model=ifelse(model.name=="BinSeg", "BinSeg", "OPART"),
+    model.name,
+    min.log.lambda, max.log.lambda, possible.fp, possible.fn, fp, fn, labels, errors
+  )],
+  .(sequenceID, test.fold, model.name, Penalty, Parameters, pred.log.lambda, possible.fp, possible.fn, fp, fn, labels, errors),
+  on=.(sequenceID, test.fold, train.model, pred.log.lambda>min.log.lambda, pred.log.lambda<max.log.lambda),
+  nomatch=0L
+]
+table(pred.with.err.dt$model.name)
+data.table::fwrite(pred.with.err.dt, "figure-cv-BIC-pred.csv")
 
 auc.dt <- err.test[, {
   select.dt <- data.table(
@@ -87,6 +104,14 @@ auc.dt <- err.test[, {
       thresholds[threshold=="predicted"]))
   }, by=.(Penalty, Parameters)]
 }, by=.(test.fold, model.name)]
+(pred.err.sorted <- pred.with.err.dt[, .(
+  labels=sum(labels),
+  errors=sum(errors)
+), keyby=.(test.fold, model.name, Penalty)])
+(auc.err.sorted <- setkey(auc.dt[
+, .(test.fold, model.name, Penalty, labels, errors)
+], test.fold, model.name, Penalty))
+all.equal(pred.err.sorted, auc.err.sorted)
 
 roc.dt <- auc.dt[, data.table(
   roc[[1]]

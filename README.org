@@ -6,10 +6,12 @@ Figures for Labeled Optimal PARTitioning paper, [[https://arxiv.org/abs/2006.139
   number of labels (left)]], [[file:figure-timings.tex][time vs number of data (right)]].
 - Figures 3-4: Best case label error. [[file:figure-label-errors.R][R script]], [[file:figure-label-errors.pdf][OPART pdf (Fig 3
   left)]], [[file:figure-label-errors-BinSeg.pdf][BinSeg pdf (Fig 3 right)]], [[file:figure-label-errors-SegAnnot.pdf][SegAnnot pdf (Fig 4)]].
-- Comparison with BIC figures. [[file:figure-cv-BIC.R][R script]]:
-  - First run [[file:figure-label-errors-data.R]] to compute target
-    intervals, which should create a folder of
-    figure-label-errors-data/*.csv files, same as
+- Comparison with BIC figures. [[file:figure-cv-BIC.R][R script]] will make [[file:figure-cv-BIC-pred.csv][this predictions CSV]].
+  - First run [[file:figure-label-errors-data.R]] and
+    [[file:figure-label-errors-data-binseg.R]] to compute label error
+    rates for a grid of penaleis, which should create folders of
+    figure-label-errors-data/*.csv and
+    figure-label-errors-data-binseg/*.csv files, same as
     [[file:figure-label-errors-data.tgz]]
   - Figure 5: [[file:figure-cv-BIC.pdf][Error rates]], [[file:figure-cv-BIC-error-rates.csv][CSV for data in figure]].
   - Figure 6: [[file:figure-cv-BIC-roc.pdf][ROC curves]], [[file:figure-cv-BIC-roc.csv][CSV for data in figure]].
