@@ -52,7 +52,10 @@ pred.dt <- err.train[, {
   keep <- -Inf < target.mat[, 1] | target.mat[,2] < Inf
   fit <- penaltyLearning::IntervalRegressionUnregularized(
     feature.mat[keep, , drop=FALSE], target.mat[keep, ])
-  print(fit)
+  lm.keep <- rowSums(is.finite(target.mat))==2
+  lm.label <- rowMeans(target.mat[lm.keep,])
+  lm.dt <- data.table(log.log.data=feature.mat[lm.keep,], log.penalty=lm.label)
+  lm.fit <- lm(log.penalty ~ log.log.data, lm.dt)
   rbind(
     data.table(
       sequenceID=rownames(feature.mat),
@@ -64,6 +67,11 @@ pred.dt <- err.train[, {
       Penalty="BIC",
       Parameters=0,
       pred.log.lambda=as.numeric(feature.mat)),
+    data.table(
+      sequenceID=rownames(feature.mat),
+      Penalty="lm",
+      Parameters=2,
+      pred.log.lambda=predict(lm.fit, data.table(feature.mat))),
     data.table(
       sequenceID=rownames(feature.mat),
       Penalty="linear",
